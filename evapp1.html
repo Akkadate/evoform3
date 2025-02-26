@@ -344,8 +344,8 @@
             tableBody.empty();
             
             coursesToEvaluate.forEach((course, index) => {
-                const statusClass = course.status === 'ยังไม่ได้ประเมิน' ? 'pending' : 'submitted';
-                const statusText = course.status === 'ยังไม่ได้ประเมิน' ? 
+                const statusClass = course.status === 'no' ? 'pending' : 'submitted';
+                const statusText = course.status === 'no' ? 
                     `<span class="evaluate-btn ${statusClass}" data-index="${index}">${course.status}</span>` : 
                     `<span class="${statusClass}">${course.status}</span>`;
                 

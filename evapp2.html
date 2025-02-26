@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แบบประเมินอาจารย์ผู้สอน</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .btn-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+            border-color: #0a58ca;
+        }
+        .rating-label {
+            margin-right: 10px;
+            font-weight: normal;
+        }
+        .rating-container {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+        .rating-item {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+            margin-bottom: 10px;
+        }
+        .question {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #status-message {
+            text-align: center;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .course-table {
+            margin-top: 20px;
+        }
+        .course-table th, .course-table td {
+            vertical-align: middle;
+        }
+        .evaluate-btn {
+            cursor: pointer;
+            color: #0d6efd;
+            text-decoration: underline;
+        }
+        .submitted {
+            color: #198754;
+            font-weight: bold;
+        }
+        .pending {
+            color: #dc3545;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>ระบบประเมินอาจารย์ผู้สอน</h2>
+            <p class="text-muted">กรุณาประเมินการสอนของอาจารย์เพื่อการพัฒนาคุณภาพการเรียนการสอน</p>
+        </div>
+
+        <!-- หน้าล็อกอิน -->
+        <div id="login-page">
+            <h3 class="mb-4">เข้าสู่ระบบ</h3>
+            <div class="mb-3">
+                <label for="student-id" class="form-label">รหัสนักศึกษา</label>
+                <input type="text" class="form-control" id="student-id" placeholder="กรุณากรอกรหัสนักศึกษา">
+            </div>
+            <button id="login-btn" class="btn btn-primary">เข้าสู่ระบบ</button>
+            <div id="login-error" class="mt-3 text-danger"></div>
+        </div>
+
+        <!-- หน้ารายวิชาที่ต้องประเมิน -->
+        <div id="courses-page" style="display: none;">
+            <h3 class="mb-4">รายวิชาที่ต้องประเมิน</h3>
+            <p>รหัสนักศึกษา: <span id="student-id-display"></span></p>
+            <div class="table-responsive course-table">
+                <table class="table table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ลำดับ</th>
+                            <th>ชื่อวิชา</th>
+                            <th>อาจารย์ผู้สอน</th>
+                            <th>ภาคการศึกษา</th>
+                            <th>สถานะการประเมิน</th>
+                        </tr>
+                    </thead>
+                    <tbody id="courses-table-body">
+                        <!-- ข้อมูลรายวิชาจะถูกเพิ่มที่นี่ด้วย JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            <button id="logout-btn" class="btn btn-secondary">ออกจากระบบ</button>
+        </div>
+
+        <!-- หน้าแบบประเมิน -->
+        <div id="evaluation-page" style="display: none;">
+            <h3 class="mb-4">แบบประเมินการสอน</h3>
+            <div id="evaluation-info" class="mb-4">
+                <p>รหัสนักศึกษา: <span id="eval-student-id"></span></p>
+                <p>รายวิชา: <span id="eval-course"></span></p>
+                <p>อาจารย์ผู้สอน: <span id="eval-teacher"></span></p>
+                <p>ภาคการศึกษา: <span id="eval-semester"></span></p>
+            </div>
+            
+            <div id="evaluation-form">
+                <!-- คำถามจะถูกเพิ่มที่นี่ด้วย JavaScript -->
+            </div>
+            
+            <div class="mt-4">
+                <button id="submit-evaluation" class="btn btn-primary">ส่งแบบประเมิน</button>
+                <button id="back-to-courses" class="btn btn-secondary ms-2">ย้อนกลับ</button>
+            </div>
+            
+            <div id="evaluation-status" class="text-center mt-3"></div>
+        </div>
+
+        <!-- ส่วนแสดงสถานะและโหลด -->
+        <div id="loading" style="display: none;">
+            <div class="loader"></div>
+            <div id="status-message">กำลังโหลดข้อมูล...</div>
+        </div>
+
+        <!-- ส่วนแสดงข้อความเมื่อประเมินเสร็จ -->
+        <div id="success-page" style="display: none;">
+            <div class="text-center">
+                <h3 class="text-success mb-4">ส่งแบบประเมินเรียบร้อยแล้ว</h3>
+                <p>ขอบคุณสำหรับการให้ข้อมูลที่เป็นประโยชน์</p>
+                <button id="back-to-courses-success" class="btn btn-primary mt-3">กลับไปหน้ารายวิชา</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script>
+        // ข้อมูลเชื่อมต่อกับ Google Sheets API
+        // ในสถานการณ์จริง คุณต้องสร้าง Google Apps Script เป็น Web App และใช้ URL ของมันแทน
+        const API_URL = "https://script.google.com/macros/s/AKfycbySCJgK8vStb8roA2rRwiGLB9YSE1j2L-rzczeQpvdziw1yH40mDzKY1W8QUfe5RhAS3w/exec";
+        
+        // ข้อมูลที่จำเป็นสำหรับการประเมิน
+        let currentStudentId = '';
+        let coursesToEvaluate = [];
+        let questions = [];
+        let currentCourse = null;
+
+        // เมื่อเอกสารโหลดเสร็จ
+        $(document).ready(function() {
+            // เมื่อกดปุ่มเข้าสู่ระบบ
+            $('#login-btn').click(function() {
+                login();
+            });
+
+            // กดปุ่ม Enter เพื่อล็อกอิน
+            $('#student-id').keypress(function(e) {
+                if (e.which === 13) {
+                    login();
+                }
+            });
+
+            // ปุ่มออกจากระบบ
+            $('#logout-btn').click(function() {
+                logout();
+            });
+
+            // ปุ่มย้อนกลับไปหน้ารายวิชา
+            $('#back-to-courses, #back-to-courses-success').click(function() {
+                showPage('courses-page');
+            });
+
+            // ปุ่มส่งแบบประเมิน
+            $('#submit-evaluation').click(function() {
+                submitEvaluation();
+            });
+        });
+
+        // ฟังก์ชันล็อกอิน
+        function login() {
+            const studentId = $('#student-id').val().trim();
+            
+            if (studentId === '') {
+                $('#login-error').text('กรุณากรอกรหัสนักศึกษา');
+                return;
+            }
+            
+            $('#login-error').text('');
+            showLoading('กำลังตรวจสอบข้อมูล...');
+            
+            // ในสถานการณ์จริง นี่คือส่วนที่จะเชื่อมต่อกับ Google Sheets ผ่าน API
+            // สำหรับตัวอย่าง เราจะจำลองการดึงข้อมูล
+            simulateFetchStudentCourses(studentId)
+                .then(courses => {
+                    if (courses.length === 0) {
+                        hideLoading();
+                        $('#login-error').text('ไม่พบข้อมูลนักศึกษาในระบบ');
+                        return;
+                    }
+                    
+                    currentStudentId = studentId;
+                    coursesToEvaluate = courses;
+                    
+                    // แสดงรหัสนักศึกษา
+                    $('#student-id-display').text(studentId);
+                    
+                    // สร้างตารางรายวิชา
+                    populateCoursesTable();
+                    
+                    // ดึงข้อมูลคำถาม
+                    return simulateFetchQuestions();
+                })
+                .then(fetchedQuestions => {
+                    if (fetchedQuestions) {
+                        questions = fetchedQuestions;
+                        hideLoading();
+                        showPage('courses-page');
+                    }
+                })
+                .catch(error => {
+                    hideLoading();
+                    $('#login-error').text('เกิดข้อผิดพลาด: ' + error.message);
+                });
+        }
+
+        // ฟังก์ชันแสดงตารางรายวิชา
+        function populateCoursesTable() {
+            const tableBody = $('#courses-table-body');
+            tableBody.empty();
+            
+            coursesToEvaluate.forEach((course, index) => {
+                const statusClass = course.status === 'ยังไม่ได้ประเมิน' ? 'pending' : 'submitted';
+                const statusText = course.status === 'ยังไม่ได้ประเมิน' ? 
+                    `<span class="evaluate-btn ${statusClass}" data-index="${index}">${course.status}</span>` : 
+                    `<span class="${statusClass}">${course.status}</span>`;
+                
+                tableBody.append(`
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${course.courseName}</td>
+                        <td>${course.teacherName}</td>
+                        <td>${course.semester}</td>
+                        <td>${statusText}</td>
+                    </tr>
+                `);
+            });
+            
+            // เพิ่ม event listener สำหรับลิงก์ประเมิน
+            $('.evaluate-btn').click(function() {
+                const index = $(this).data('index');
+                openEvaluationForm(index);
+            });
+        }
+
+        // ฟังก์ชันเปิดแบบประเมิน
+        function openEvaluationForm(courseIndex) {
+            currentCourse = coursesToEvaluate[courseIndex];
+            
+            // แสดงข้อมูลรายวิชา
+            $('#eval-student-id').text(currentStudentId);
+            $('#eval-course').text(currentCourse.courseName);
+            $('#eval-teacher').text(currentCourse.teacherName);
+            $('#eval-semester').text(currentCourse.semester);
+            
+            // สร้างแบบฟอร์มประเมิน
+            createEvaluationForm();
+            
+            // แสดงหน้าประเมิน
+            showPage('evaluation-page');
+        }
+
+        // ฟังก์ชันสร้างแบบฟอร์มประเมิน
+        function createEvaluationForm() {
+            const form = $('#evaluation-form');
+            form.empty();
+            
+            questions.forEach((question, index) => {
+                const isLastQuestion = index === questions.length - 1;
+                const questionHtml = isLastQuestion ? 
+                    createTextAreaQuestion(question, index) : 
+                    createRatingQuestion(question, index);
+                
+                form.append(questionHtml);
+            });
+        }
+
+        // สร้างคำถามแบบเรทติ้ง
+        function createRatingQuestion(question, index) {
+            return `
+                <div class="question">
+                    <div class="form-group">
+                        <label><strong>${index + 1}. ${question}</strong></label>
+                        <div class="rating-container">
+                            <div class="rating-item">
+                                <input type="radio" name="q${index}" id="q${index}_1" value="1" class="form-check-input" required>
+                                <label for="q${index}_1" class="rating-label">1 Very Poor</label>
+                            </div>
+                            <div class="rating-item">
+                                <input type="radio" name="q${index}" id="q${index}_2" value="2" class="form-check-input" required>
+                                <label for="q${index}_2" class="rating-label">2 Poor</label>
+                            </div>
+                            <div class="rating-item">
+                                <input type="radio" name="q${index}" id="q${index}_3" value="3" class="form-check-input" required>
+                                <label for="q${index}_3" class="rating-label">3 Normal</label>
+                            </div>
+                            <div class="rating-item">
+                                <input type="radio" name="q${index}" id="q${index}_4" value="4" class="form-check-input" required>
+                                <label for="q${index}_4" class="rating-label">4 Good</label>
+                            </div>
+                            <div class="rating-item">
+                                <input type="radio" name="q${index}" id="q${index}_5" value="5" class="form-check-input" required>
+                                <label for="q${index}_5" class="rating-label">5 Excellent</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // สร้างคำถามแบบข้อความ
+        function createTextAreaQuestion(question, index) {
+            return `
+                <div class="question">
+                    <div class="form-group">
+                        <label for="q${index}"><strong>${index + 1}. ${question}</strong></label>
+                        <textarea class="form-control mt-2" id="q${index}" name="q${index}" rows="4" placeholder="กรุณาแสดงความคิดเห็น"></textarea>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ฟังก์ชันส่งแบบประเมิน
+        function submitEvaluation() {
+            // ตรวจสอบว่าตอบครบทุกข้อหรือไม่
+            const unansweredQuestions = [];
+            
+            questions.forEach((_, index) => {
+                if (index < questions.length - 1) { // คำถามแบบ rating
+                    if ($(`input[name="q${index}"]:checked`).length === 0) {
+                        unansweredQuestions.push(index + 1);
+                    }
+                }
+            });
+            
+            if (unansweredQuestions.length > 0) {
+                $('#evaluation-status').html(`<div class="alert alert-danger">กรุณาตอบคำถามข้อที่ ${unansweredQuestions.join(', ')}</div>`);
+                return;
+            }
+            
+            // รวบรวมคำตอบ
+            const answers = [];
+            
+            questions.forEach((_, index) => {
+                if (index < questions.length - 1) { // คำถามแบบ rating
+                    answers.push($(`input[name="q${index}"]:checked`).val());
+                } else { // คำถามแบบข้อความ
+                    answers.push($(`#q${index}`).val());
+                }
+            });
+            
+            // สร้างข้อมูลที่จะส่ง
+            const evaluationData = {
+                studentId: currentStudentId,
+                courseName: currentCourse.courseName,
+                teacherName: currentCourse.teacherName,
+                semester: currentCourse.semester,
+                answers: answers
+            };
+            
+            showLoading('กำลังส่งแบบประเมิน...');
+            
+            // ในสถานการณ์จริง นี่คือส่วนที่จะส่งข้อมูลไปยัง Google Sheets ผ่าน API
+            // สำหรับตัวอย่าง เราจะจำลองการส่งข้อมูล
+            simulateSubmitEvaluation(evaluationData)
+                .then(response => {
+                    hideLoading();
+                    
+                    if (response.success) {
+                        // อัปเดตสถานะการประเมิน
+                        const courseIndex = coursesToEvaluate.findIndex(c => 
+                            c.courseName === currentCourse.courseName && 
+                            c.teacherName === currentCourse.teacherName);
+                        
+                        if (courseIndex !== -1) {
+                            coursesToEvaluate[courseIndex].status = 'ประเมินแล้ว';
+                        }
+                        
+                        showPage('success-page');
+                    } else {
+                        $('#evaluation-status').html(`<div class="alert alert-danger">เกิดข้อผิดพลาด: ${response.message}</div>`);
+                    }
+                })
+                .catch(error => {
+                    hideLoading();
+                    $('#evaluation-status').html(`<div class="alert alert-danger">เกิดข้อผิดพลาด: ${error.message}</div>`);
+                });
+        }
+
+        // ฟังก์ชันออกจากระบบ
+        function logout() {
+            currentStudentId = '';
+            coursesToEvaluate = [];
+            currentCourse = null;
+            $('#student-id').val('');
+            $('#login-error').text('');
+            showPage('login-page');
+        }
+
+        // ฟังก์ชันแสดงหน้าต่างๆ
+        function showPage(pageId) {
+            // ซ่อนทุกหน้า
+            $('#login-page, #courses-page, #evaluation-page, #loading, #success-page').hide();
+            
+            // แสดงหน้าที่ต้องการ
+            $(`#${pageId}`).show();
+            
+            // กรณีหน้าแสดงรายวิชา ให้อัปเดตตารางใหม่
+            if (pageId === 'courses-page') {
+                populateCoursesTable();
+            }
+        }
+
+        // ฟังก์ชันแสดงการโหลด
+        function showLoading(message) {
+            $('#status-message').text(message || 'กำลังโหลด...');
+            $('#loading').show();
+        }
+
+        // ฟังก์ชันซ่อนการโหลด
+        function hideLoading() {
+            $('#loading').hide();
+        }
+
+        // ฟังก์ชันจำลองการดึงข้อมูลรายวิชาของนักศึกษา
+        function simulateFetchStudentCourses(studentId) {
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    // สำหรับตัวอย่าง กำหนดให้มีรหัสนักศึกษา 123456 และ 654321 เท่านั้น
+                    if (studentId === '123456') {
+                        resolve([
+                            { courseName: 'การเขียนโปรแกรมเว็บ', teacherName: 'อ.สมชาย ใจดี', semester: '1/2565', status: 'ยังไม่ได้ประเมิน' },
+                            { courseName: 'ฐานข้อมูล', teacherName: 'อ.สมศรี รักสอน', semester: '1/2565', status: 'ยังไม่ได้ประเมิน' },
+                            { courseName: 'คณิตศาสตร์คอมพิวเตอร์', teacherName: 'ผศ.ดร.วิชัย เก่ง', semester: '1/2565', status: 'ประเมินแล้ว' }
+                        ]);
+                    } else if (studentId === '654321') {
+                        resolve([
+                            { courseName: 'การเขียนโปรแกรมเว็บ', teacherName: 'อ.สมชาย ใจดี', semester: '1/2565', status: 'ยังไม่ได้ประเมิน' },
+                            { courseName: 'ปัญญาประดิษฐ์', teacherName: 'รศ.ดร.ปัญญา ล้ำเลิศ', semester: '1/2565', status: 'ยังไม่ได้ประเมิน' }
+                        ]);
+                    } else {
+                        resolve([]);
+                    }
+                }, 1000);
+            });
+        }
+
+        // ฟังก์ชันจำลองการดึงข้อมูลคำถาม
+        function simulateFetchQuestions() {
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    resolve([
+                        'อาจารย์มีการเตรียมการสอนที่ดี',
+                        'อาจารย์สามารถอธิบายเนื้อหาได้ชัดเจน',
+                        'อาจารย์มีเทคนิคการสอนที่น่าสนใจ',
+                        'อาจารย์เปิดโอกาสให้นักศึกษาซักถามและแสดงความคิดเห็น',
+                        'อาจารย์มีการประเมินผลการเรียนที่ยุติธรรม',
+                        'อาจารย์มีความตรงต่อเวลาในการสอน',
+                        'อาจารย์มีการนำเทคโนโลยีมาช่วยในการสอน',
+                        'ความพึงพอใจในภาพรวมของการเรียนการสอน',
+                        'ข้อเสนอแนะเพิ่มเติมสำหรับอาจารย์ผู้สอน'
+                    ]);
+                }, 500);
+            });
+        }
+
+        // ฟังก์ชันจำลองการส่งข้อมูลการประเมิน
+        function simulateSubmitEvaluation(data) {
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    console.log('Evaluation Data:', data);
+                    resolve({ success: true, message: 'บันทึกข้อมูลเรียบร้อย' });
+                }, 1500);
+            });
+        }
+
+       
+        // ฟังก์ชันเชื่อมต่อกับ Google Sheets API
+        function fetchStudentCourses(studentId) {
+            return fetch(`${API_URL}?action=getStudentCourses&studentId=${studentId}`)
+                .then(response => response.json());
+        }
+
+        function fetchQuestions() {
+            return fetch(`${API_URL}?action=getQuestions`)
+                .then(response => response.json());
+        }
+
+        function submitEvaluationToSheet(data) {
+            return fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'submitEvaluation',
+                    data: data
+                })
+            })
+            .then(response => response.json());
+        }
+       
+    </script>
+</body>
+</html>

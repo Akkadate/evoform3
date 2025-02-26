@@ -90,6 +90,20 @@
             color: #dc3545;
             font-weight: bold;
         }
+        .api-status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+        .api-status.success {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+        .api-status.error {
+            background-color: #f8d7da;
+            color: #842029;
+        }
     </style>
 </head>
 <body>
@@ -108,6 +122,7 @@
             </div>
             <button id="login-btn" class="btn btn-primary">เข้าสู่ระบบ</button>
             <div id="login-error" class="mt-3 text-danger"></div>
+            <div id="api-connection-status" class="api-status"></div>
         </div>
 
         <!-- หน้ารายวิชาที่ต้องประเมิน -->
@@ -174,8 +189,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script>
         // ข้อมูลเชื่อมต่อกับ Google Sheets API
-        // ในสถานการณ์จริง คุณต้องสร้าง Google Apps Script เป็น Web App และใช้ URL ของมันแทน
-        const API_URL = "https://script.google.com/macros/s/AKfycbwxtB7A-CHXMpRXNW2_LwCNW2WpeOM1lvgXzTwh7Znyw0CnmFuFRSRCK_sWcOkiFBGdSA/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbx-LWcV8K1YBDX2-SRduQc_MH4iId9oADJNOEpmKw_94EiFNta0I399pU7wCfOREuPA2Q/exec";
         
         // ข้อมูลที่จำเป็นสำหรับการประเมิน
         let currentStudentId = '';
@@ -185,6 +199,9 @@
 
         // เมื่อเอกสารโหลดเสร็จ
         $(document).ready(function() {
+            // ทดสอบการเชื่อมต่อกับ API
+            testApiConnection();
+            
             // เมื่อกดปุ่มเข้าสู่ระบบ
             $('#login-btn').click(function() {
                 login();
@@ -213,6 +230,39 @@
             });
         });
 
+        // ฟังก์ชันทดสอบการเชื่อมต่อกับ API
+        function testApiConnection() {
+            const apiStatus = $('#api-connection-status');
+            apiStatus.removeClass('success error').hide();
+            
+            // ทดสอบเรียก API เพื่อดึงคำถาม
+            fetch(`${API_URL}?action=getQuestions`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        // แสดงข้อความข้อผิดพลาด
+                        apiStatus.addClass('error').text('การเชื่อมต่อ API มีปัญหา: ' + data.message).show();
+                        console.error('API error:', data);
+                    } else {
+                        // แสดงข้อความเชื่อมต่อสำเร็จ (ซ่อนหลังจาก 3 วินาที)
+                        apiStatus.addClass('success').text('เชื่อมต่อ API สำเร็จ').show();
+                        setTimeout(() => {
+                            apiStatus.fadeOut();
+                        }, 3000);
+                    }
+                })
+                .catch(error => {
+                    // แสดงข้อความข้อผิดพลาด
+                    apiStatus.addClass('error').text('ไม่สามารถเชื่อมต่อกับ API ได้: ' + error.message).show();
+                    console.error('API connection error:', error);
+                });
+        }
+
         // ฟังก์ชันล็อกอิน
         function login() {
             const studentId = $('#student-id').val().trim();
@@ -225,18 +275,31 @@
             $('#login-error').text('');
             showLoading('กำลังตรวจสอบข้อมูล...');
             
-            // ในสถานการณ์จริง นี่คือส่วนที่จะเชื่อมต่อกับ Google Sheets ผ่าน API
-            // สำหรับตัวอย่าง เราจะจำลองการดึงข้อมูล
-            simulateFetchStudentCourses(studentId)
-                .then(courses => {
-                    if (courses.length === 0) {
+            // เรียกใช้ API เพื่อดึงข้อมูลรายวิชาของนักศึกษา
+            fetch(`${API_URL}?action=getStudentCourses&studentId=${studentId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Student courses data:', data);
+                    
+                    if (data.error) {
+                        hideLoading();
+                        $('#login-error').text('เกิดข้อผิดพลาด: ' + data.message);
+                        return;
+                    }
+                    
+                    if (!data.courses || data.courses.length === 0) {
                         hideLoading();
                         $('#login-error').text('ไม่พบข้อมูลนักศึกษาในระบบ');
                         return;
                     }
                     
                     currentStudentId = studentId;
-                    coursesToEvaluate = courses;
+                    coursesToEvaluate = data.courses;
                     
                     // แสดงรหัสนักศึกษา
                     $('#student-id-display').text(studentId);
@@ -245,18 +308,33 @@
                     populateCoursesTable();
                     
                     // ดึงข้อมูลคำถาม
-                    return simulateFetchQuestions();
+                    return fetch(`${API_URL}?action=getQuestions`);
                 })
-                .then(fetchedQuestions => {
-                    if (fetchedQuestions) {
-                        questions = fetchedQuestions;
+                .then(response => {
+                    if (response && !response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    if (response) return response.json();
+                })
+                .then(data => {
+                    if (data) {
+                        console.log('Questions data:', data);
+                        
+                        if (data.error) {
+                            hideLoading();
+                            $('#login-error').text('เกิดข้อผิดพลาดในการดึงคำถาม: ' + data.message);
+                            return;
+                        }
+                        
+                        questions = data.questions;
                         hideLoading();
                         showPage('courses-page');
                     }
                 })
                 .catch(error => {
+                    console.error('Login error:', error);
                     hideLoading();
-                    $('#login-error').text('เกิดข้อผิดพลาด: ' + error.message);
+                    $('#login-error').text('เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + error.message);
                 });
         }
 
@@ -406,31 +484,48 @@
             
             showLoading('กำลังส่งแบบประเมิน...');
             
-            // ในสถานการณ์จริง นี่คือส่วนที่จะส่งข้อมูลไปยัง Google Sheets ผ่าน API
-            // สำหรับตัวอย่าง เราจะจำลองการส่งข้อมูล
-            simulateSubmitEvaluation(evaluationData)
-                .then(response => {
-                    hideLoading();
-                    
-                    if (response.success) {
-                        // อัปเดตสถานะการประเมิน
-                        const courseIndex = coursesToEvaluate.findIndex(c => 
-                            c.courseName === currentCourse.courseName && 
-                            c.teacherName === currentCourse.teacherName);
-                        
-                        if (courseIndex !== -1) {
-                            coursesToEvaluate[courseIndex].status = 'ประเมินแล้ว';
-                        }
-                        
-                        showPage('success-page');
-                    } else {
-                        $('#evaluation-status').html(`<div class="alert alert-danger">เกิดข้อผิดพลาด: ${response.message}</div>`);
-                    }
+            // ส่งข้อมูลไปยัง API
+            fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'submitEvaluation',
+                    data: evaluationData
                 })
-                .catch(error => {
-                    hideLoading();
-                    $('#evaluation-status').html(`<div class="alert alert-danger">เกิดข้อผิดพลาด: ${error.message}</div>`);
-                });
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                hideLoading();
+                console.log('Submit evaluation response:', data);
+                
+                if (data.error) {
+                    $('#evaluation-status').html(`<div class="alert alert-danger">เกิดข้อผิดพลาด: ${data.message}</div>`);
+                    return;
+                }
+                
+                // อัปเดตสถานะการประเมิน
+                const courseIndex = coursesToEvaluate.findIndex(c => 
+                    c.courseName === currentCourse.courseName && 
+                    c.teacherName === currentCourse.teacherName);
+                
+                if (courseIndex !== -1) {
+                    coursesToEvaluate[courseIndex].status = 'ประเมินแล้ว';
+                }
+                
+                showPage('success-page');
+            })
+            .catch(error => {
+                hideLoading();
+                console.error('Submit evaluation error:', error);
+                $('#evaluation-status').html(`<div class="alert alert-danger">เกิดข้อผิดพลาด: ${error.message}</div>`);
+            });
         }
 
         // ฟังก์ชันออกจากระบบ
@@ -467,88 +562,6 @@
         function hideLoading() {
             $('#loading').hide();
         }
-
-        // ฟังก์ชันจำลองการดึงข้อมูลรายวิชาของนักศึกษา
-        function simulateFetchStudentCourses(studentId) {
-            return new Promise((resolve, reject) => {
-                setTimeout(() => {
-                    // สำหรับตัวอย่าง กำหนดให้มีรหัสนักศึกษา 123456 และ 654321 เท่านั้น
-                    if (studentId === '123456') {
-                        resolve([
-                            { courseName: 'การเขียนโปรแกรมเว็บ', teacherName: 'อ.สมชาย ใจดี', semester: '1/2565', status: 'ยังไม่ได้ประเมิน' },
-                            { courseName: 'ฐานข้อมูล', teacherName: 'อ.สมศรี รักสอน', semester: '1/2565', status: 'ยังไม่ได้ประเมิน' },
-                            { courseName: 'คณิตศาสตร์คอมพิวเตอร์', teacherName: 'ผศ.ดร.วิชัย เก่ง', semester: '1/2565', status: 'ประเมินแล้ว' }
-                        ]);
-                    } else if (studentId === '654321') {
-                        resolve([
-                            { courseName: 'การเขียนโปรแกรมเว็บ', teacherName: 'อ.สมชาย ใจดี', semester: '1/2565', status: 'ยังไม่ได้ประเมิน' },
-                            { courseName: 'ปัญญาประดิษฐ์', teacherName: 'รศ.ดร.ปัญญา ล้ำเลิศ', semester: '1/2565', status: 'ยังไม่ได้ประเมิน' }
-                        ]);
-                    } else {
-                        resolve([]);
-                    }
-                }, 1000);
-            });
-        }
-
-        // ฟังก์ชันจำลองการดึงข้อมูลคำถาม
-        function simulateFetchQuestions() {
-            return new Promise((resolve, reject) => {
-                setTimeout(() => {
-                    resolve([
-                        'อาจารย์มีการเตรียมการสอนที่ดี',
-                        'อาจารย์สามารถอธิบายเนื้อหาได้ชัดเจน',
-                        'อาจารย์มีเทคนิคการสอนที่น่าสนใจ',
-                        'อาจารย์เปิดโอกาสให้นักศึกษาซักถามและแสดงความคิดเห็น',
-                        'อาจารย์มีการประเมินผลการเรียนที่ยุติธรรม',
-                        'อาจารย์มีความตรงต่อเวลาในการสอน',
-                        'อาจารย์มีการนำเทคโนโลยีมาช่วยในการสอน',
-                        'ความพึงพอใจในภาพรวมของการเรียนการสอน',
-                        'ข้อเสนอแนะเพิ่มเติมสำหรับอาจารย์ผู้สอน'
-                    ]);
-                }, 500);
-            });
-        }
-
-        // ฟังก์ชันจำลองการส่งข้อมูลการประเมิน
-        function simulateSubmitEvaluation(data) {
-            return new Promise((resolve, reject) => {
-                setTimeout(() => {
-                    console.log('Evaluation Data:', data);
-                    resolve({ success: true, message: 'บันทึกข้อมูลเรียบร้อย' });
-                }, 1500);
-            });
-        }
-
-        /*
-        ในสถานการณ์จริง คุณจะต้องเชื่อมต่อกับ Google Sheets API ผ่าน Google Apps Script
-        ต่อไปนี้เป็นตัวอย่างฟังก์ชันที่จะใช้งานจริง:
-*/
-        // ฟังก์ชันเชื่อมต่อกับ Google Sheets API
-        function fetchStudentCourses(studentId) {
-            return fetch(`${API_URL}?action=getStudentCourses&studentId=${studentId}`)
-                .then(response => response.json());
-        }
-
-        function fetchQuestions() {
-            return fetch(`${API_URL}?action=getQuestions`)
-                .then(response => response.json());
-        }
-
-        function submitEvaluationToSheet(data) {
-            return fetch(API_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    action: 'submitEvaluation',
-                    data: data
-                })
-            })
-            .then(response => response.json());
-        }
-        
     </script>
 </body>
 </html>

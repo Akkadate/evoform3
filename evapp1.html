@@ -444,89 +444,98 @@
             `;
         }
 
-        // ฟังก์ชันส่งแบบประเมิน
-        function submitEvaluation() {
-            // ตรวจสอบว่าตอบครบทุกข้อหรือไม่
-            const unansweredQuestions = [];
-            
-            questions.forEach((_, index) => {
-                if (index < questions.length - 1) { // คำถามแบบ rating
-                    if ($(`input[name="q${index}"]:checked`).length === 0) {
-                        unansweredQuestions.push(index + 1);
-                    }
-                }
-            });
-            
-            if (unansweredQuestions.length > 0) {
-                $('#evaluation-status').html(`<div class="alert alert-danger">กรุณาตอบคำถามข้อที่ ${unansweredQuestions.join(', ')}</div>`);
-                return;
+       // ฟังก์ชันส่งแบบประเมิน
+function submitEvaluation() {
+    // ตรวจสอบว่าตอบครบทุกข้อหรือไม่
+    const unansweredQuestions = [];
+    
+    questions.forEach((_, index) => {
+        if (index < questions.length - 1) { // คำถามแบบ rating
+            if ($(`input[name="q${index}"]:checked`).length === 0) {
+                unansweredQuestions.push(index + 1);
             }
-            
-            // รวบรวมคำตอบ
-            const answers = [];
-            
-            questions.forEach((_, index) => {
-                if (index < questions.length - 1) { // คำถามแบบ rating
-                    answers.push($(`input[name="q${index}"]:checked`).val());
-                } else { // คำถามแบบข้อความ
-                    answers.push($(`#q${index}`).val());
-                }
-            });
-            
-            // สร้างข้อมูลที่จะส่ง
-            const evaluationData = {
-                studentId: currentStudentId,
-                courseName: currentCourse.courseName,
-                teacherName: currentCourse.teacherName,
-                semester: currentCourse.semester,
-                answers: answers
-            };
-            
-            showLoading('กำลังส่งแบบประเมิน...');
-            
-            // ส่งข้อมูลไปยัง API
-            fetch(API_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    action: 'submitEvaluation',
-                    data: evaluationData
-                })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                hideLoading();
-                console.log('Submit evaluation response:', data);
-                
-                if (data.error) {
-                    $('#evaluation-status').html(`<div class="alert alert-danger">เกิดข้อผิดพลาด: ${data.message}</div>`);
-                    return;
-                }
-                
-                // อัปเดตสถานะการประเมิน
-                const courseIndex = coursesToEvaluate.findIndex(c => 
-                    c.courseName === currentCourse.courseName && 
-                    c.teacherName === currentCourse.teacherName);
-                
-                if (courseIndex !== -1) {
-                    coursesToEvaluate[courseIndex].status = 'ประเมินแล้ว';
-                }
-                
-                showPage('success-page');
-            })
-            .catch(error => {
-                hideLoading();
-                console.error('Submit evaluation error:', error);
-                $('#evaluation-status').html(`<div class="alert alert-danger">เกิดข้อผิดพลาด: ${error.message}</div>`);
-            });
         }
+    });
+    
+    if (unansweredQuestions.length > 0) {
+        $('#evaluation-status').html(`<div class="alert alert-danger">กรุณาตอบคำถามข้อที่ ${unansweredQuestions.join(', ')}</div>`);
+        return;
+    }
+    
+    // รวบรวมคำตอบ
+    const answers = [];
+    
+    questions.forEach((_, index) => {
+        if (index < questions.length - 1) { // คำถามแบบ rating
+            answers.push($(`input[name="q${index}"]:checked`).val());
+        } else { // คำถามแบบข้อความ
+            answers.push($(`#q${index}`).val());
+        }
+    });
+    
+    // สร้างข้อมูลที่จะส่ง
+    const evaluationData = {
+        studentId: currentStudentId,
+        courseName: currentCourse.courseName,
+        teacherName: currentCourse.teacherName,
+        semester: currentCourse.semester,
+        answers: answers
+    };
+    
+    showLoading('กำลังส่งแบบประเมิน...');
+    
+    console.log('Sending evaluation data:', evaluationData);
+    
+    // ส่งข้อมูลในรูปแบบ JSON โดยตรง (แบบเดียวกับ evformv2.txt)
+    fetch(API_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(evaluationData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Network response was not ok: ${response.status} ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        hideLoading();
+        console.log('Submit evaluation response:', data);
+        
+        if (data.error || data.status === 'error') {
+            $('#evaluation-status').html(`<div class="alert alert-danger">เกิดข้อผิดพลาด: ${data.message}</div>`);
+            return;
+        }
+        
+        // อัปเดตสถานะการประเมิน
+        const courseIndex = coursesToEvaluate.findIndex(c => 
+            c.courseName === currentCourse.courseName && 
+            c.teacherName === currentCourse.teacherName);
+        
+        if (courseIndex !== -1) {
+            coursesToEvaluate[courseIndex].status = 'ประเมินแล้ว';
+        }
+        
+        showPage('success-page');
+    })
+    .catch(error => {
+        hideLoading();
+        console.error('Submit evaluation error:', error);
+        $('#evaluation-status').html(`<div class="alert alert-danger">เกิดข้อผิดพลาด: ${error.message}</div>`);
+        
+        // แสดงข้อมูลเพิ่มเติมเพื่อช่วยในการดีบั๊ก
+        if (debugMode) {
+            $('#debug-content').html(
+                `ข้อผิดพลาดในการส่งข้อมูล:<br>
+                ${error.toString()}<br><br>
+                ข้อมูลที่พยายามส่ง:<br>
+                ${JSON.stringify(evaluationData, null, 2)}`
+            );
+        }
+    });
+}
 
         // ฟังก์ชันออกจากระบบ
         function logout() {

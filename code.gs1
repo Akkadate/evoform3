@@ -1,0 +1,331 @@
+// ไฟล์ Code.gs ใน Google Apps Script
+// นี่เป็นตัวอย่างของ Google Apps Script ที่ใช้เชื่อมต่อเว็บแอปพลิเคชันกับ Google Sheets
+
+// ID ของ Google Sheets ที่เป็นฐานข้อมูล (ต้องเปลี่ยนเป็น ID จริงของคุณ)
+var SPREADSHEET_ID = '1Zag0TDYxRsMAtTAMfIpqFlDLJPpza2aSGa8Ze4BwbtM';
+
+// ชื่อของแต่ละช่วงแผ่นงานใน Google Sheets
+var STUDENTS_SHEET_NAME = 'รายชื่อนักศึกษา';
+var QUESTIONS_SHEET_NAME = 'คำถาม';
+var RESPONSES_SHEET_NAME = 'ผลการประเมิน';
+
+function doGet(e) {
+  var action = '';
+  var studentId = '';
+  var result = {};
+  
+  // ตรวจสอบว่า e และ e.parameter มีค่าหรือไม่
+  if (e && e.parameter) {
+    action = e.parameter.action || '';
+    studentId = e.parameter.studentId || '';
+  }
+  
+  // บันทึกล็อกเพื่อตรวจสอบค่าที่ได้รับ
+  Logger.log("พารามิเตอร์ที่ได้รับ - action: " + action + ", studentId: " + studentId);
+  
+  try {
+    if (action === 'getStudentCourses') {
+      if (!studentId) {
+        result = { error: true, message: 'ไม่ได้ระบุรหัสนักศึกษา' };
+      } else {
+        result = getStudentCourses(studentId);
+      }
+    } else if (action === 'getQuestions') {
+      result = getQuestions();
+    } else {
+      result = { error: false, message: 'ระบบพร้อมใช้งาน' };
+    }
+  } catch (error) {
+    Logger.log("เกิดข้อผิดพลาด: " + error.toString());
+    result = { error: true, message: error.toString() };
+  }
+  
+    return ContentService
+      .createTextOutput(JSON.stringify(result))
+      .setMimeType(ContentService.MimeType.JSON);
+      
+}
+
+// ฟังก์ชันนี้จะทำงานเมื่อมีการส่งข้อมูล POST (ปรับให้คล้ายกับ evformv2.txt)
+function doPost(e) {
+  try {
+    // ใช้ LockService เพื่อป้องกันการเขียนพร้อมกันหลายคน
+    var lock = LockService.getScriptLock();
+    lock.tryLock(10000); // ล็อคสคริปต์ 10 วินาที
+    
+    if (!e || !e.postData || !e.postData.contents) {
+      throw new Error("ไม่พบข้อมูลที่ส่งมา");
+    }
+    
+    var params = JSON.parse(e.postData.contents);
+    
+    // บันทึกล็อกเพื่อตรวจสอบข้อมูลที่ได้รับ
+    Logger.log("POST data: " + JSON.stringify(params));
+    
+    // เปิด Spreadsheet
+    var spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var responseSheet = spreadsheet.getSheetByName(RESPONSES_SHEET_NAME);
+    
+    // ตรวจสอบว่าพบชีทสำหรับบันทึกข้อมูลหรือไม่
+    if (!responseSheet) {
+      // ถ้าไม่พบชีท ให้สร้างใหม่
+      responseSheet = spreadsheet.insertSheet(RESPONSES_SHEET_NAME);
+      // สร้างหัวตาราง
+      responseSheet.appendRow([
+        "Timestamp", 
+        "รหัสนักศึกษา", 
+        "ชื่อวิชา", 
+        "ชื่ออาจารย์", 
+        "ภาคการศึกษา", 
+        "คำตอบ"
+      ]);
+    }
+    
+    // ตรวจสอบข้อมูลที่จำเป็น
+    if (!params.studentId || !params.courseName || !params.teacherName || !params.semester || !params.answers) {
+      throw new Error("ข้อมูลไม่ครบถ้วน");
+    }
+    
+    // สร้างข้อมูลที่จะบันทึก
+    var timestamp = new Date();
+    var studentId = params.studentId;
+    var courseName = params.courseName;
+    var teacherName = params.teacherName;
+    var semester = params.semester;
+    var answers = params.answers;
+    
+    // บันทึกข้อมูลลงในชีท
+    responseSheet.appendRow([
+      timestamp, 
+      studentId, 
+      courseName, 
+      teacherName, 
+      semester, 
+      JSON.stringify(answers)
+    ]);
+    
+    // อัปเดตสถานะการประเมิน
+    updateEvaluationStatus(studentId, courseName, teacherName, semester);
+    
+    // ปลดล็อค
+    lock.releaseLock();
+     return ContentService.createTextOutput(JSON.stringify({
+      status: 'success', 
+      message: 'บันทึกข้อมูลเรียบร้อยแล้ว'
+    }))
+    .setMimeType(ContentService.MimeType.JSON)
+    .setHeaders({
+      'Access-Control-Allow-Origin': '*'
+    });
+    
+  } catch(error) {
+    // ปลดล็อคในกรณีเกิดข้อผิดพลาด
+    if (lock && lock.hasLock()) {
+      lock.releaseLock();
+    }
+    
+    Logger.log("เกิดข้อผิดพลาดใน POST: " + error.toString());
+    return ContentService.createTextOutput(JSON.stringify({
+      status: 'error',
+      message: error.toString()
+    }))
+
+    .setMimeType(ContentService.MimeType.JSON)
+    .setHeaders({
+      'Access-Control-Allow-Origin': '*'
+    });    
+      /*
+    return ContentService.createTextOutput(JSON.stringify({
+      status: 'error',
+      message: e.toString()
+    }))
+
+   
+    .setMimeType(ContentService.MimeType.JSON);
+ */
+
+  }
+}
+
+function doOptions(e) {
+  return ContentService.createTextOutput("")
+    .setMimeType(ContentService.MimeType.TEXT)
+    .setHeaders({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Max-Age': '86400'
+    });
+}
+
+// ฟังก์ชันดึงข้อมูลรายวิชาของนักศึกษา
+function getStudentCourses(studentId) {
+  if (!studentId) {
+    return { error: true, message: 'ไม่ได้ระบุรหัสนักศึกษา' };
+  }
+  
+  try {
+    // เปิด Google Sheets
+    var spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = spreadsheet.getSheetByName(STUDENTS_SHEET_NAME);
+    
+    if (!sheet) {
+      return { error: true, message: 'ไม่พบชีทข้อมูลนักศึกษา' };
+    }
+    
+    // ดึงข้อมูลทั้งหมด
+    var dataRange = sheet.getDataRange();
+    var values = dataRange.getValues();
+    
+    if (values.length === 0) {
+      return { error: true, message: 'ไม่พบข้อมูลในชีท' };
+    }
+    
+    // บันทึกล็อกข้อมูลหัวตาราง
+    Logger.log("หัวตาราง: " + JSON.stringify(values[0]));
+    
+    // ข้ามแถวแรก (หัวตาราง)
+    var headers = values[0];
+    var studentIdColIndex = headers.indexOf('รหัสนักศึกษา');
+    var semesterColIndex = headers.indexOf('ภาคการศึกษา');
+    var courseNameColIndex = headers.indexOf('ชื่อวิชา');
+    var teacherNameColIndex = headers.indexOf('ชื่ออาจารย์');
+    var statusColIndex = headers.indexOf('สถานะการทำแบบทดสอบ');
+    
+    // บันทึกล็อกตำแหน่งคอลัมม์
+    Logger.log("ตำแหน่งคอลัมม์: studentId=" + studentIdColIndex + 
+              ", semester=" + semesterColIndex + 
+              ", courseName=" + courseNameColIndex + 
+              ", teacherName=" + teacherNameColIndex + 
+              ", status=" + statusColIndex);
+    
+    if (studentIdColIndex === -1 || semesterColIndex === -1 || courseNameColIndex === -1 || 
+        teacherNameColIndex === -1 || statusColIndex === -1) {
+      return { error: true, message: 'รูปแบบชีทข้อมูลไม่ถูกต้อง' };
+    }
+    
+    // ค้นหารายวิชาของนักศึกษา
+    var courses = [];
+    for (var i = 1; i < values.length; i++) {
+      var row = values[i];
+      if (row[studentIdColIndex] == studentId) { // ใช้ == แทน === เพื่อความยืดหยุ่นในการเปรียบเทียบ
+        courses.push({
+          courseName: row[courseNameColIndex],
+          teacherName: row[teacherNameColIndex],
+          semester: row[semesterColIndex],
+          status: row[statusColIndex]
+        });
+      }
+    }
+    
+    Logger.log("พบรายวิชาทั้งหมด: " + courses.length + " วิชา");
+    
+    return { error: false, courses: courses };
+  } catch (error) {
+    Logger.log("เกิดข้อผิดพลาดในการดึงข้อมูลรายวิชา: " + error.toString());
+    return { error: true, message: 'เกิดข้อผิดพลาดในการดึงข้อมูลรายวิชา: ' + error.toString() };
+  }
+}
+
+// ฟังก์ชันดึงข้อมูลคำถาม
+function getQuestions() {
+  try {
+    // เปิด Google Sheets
+    var spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = spreadsheet.getSheetByName(QUESTIONS_SHEET_NAME);
+    
+    if (!sheet) {
+      return { error: true, message: 'ไม่พบชีทข้อมูลคำถาม' };
+    }
+    
+    // ดึงข้อมูลทั้งหมด
+    var dataRange = sheet.getDataRange();
+    var values = dataRange.getValues();
+    
+    if (values.length === 0) {
+      return { error: true, message: 'ไม่พบข้อมูลคำถามในชีท' };
+    }
+    
+    // สร้างรายการคำถาม (ข้ามแถวแรกที่อาจเป็นหัวตาราง)
+    var questions = [];
+    for (var i = 1; i < values.length; i++) {
+      if (values[i][0]) {
+        questions.push(values[i][0]);
+      }
+    }
+    
+    Logger.log("พบคำถามทั้งหมด: " + questions.length + " ข้อ");
+    
+    return { error: false, questions: questions };
+  } catch (error) {
+    Logger.log("เกิดข้อผิดพลาดในการดึงข้อมูลคำถาม: " + error.toString());
+    return { error: true, message: 'เกิดข้อผิดพลาดในการดึงข้อมูลคำถาม: ' + error.toString() };
+  }
+}
+
+// ฟังก์ชันอัปเดตสถานะการประเมิน
+function updateEvaluationStatus(studentId, courseName, teacherName, semester) {
+  try {
+    // เปิด Google Sheets
+    var spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = spreadsheet.getSheetByName(STUDENTS_SHEET_NAME);
+    
+    // ดึงข้อมูลทั้งหมด
+    var dataRange = sheet.getDataRange();
+    var values = dataRange.getValues();
+    
+    // ข้ามแถวแรก (หัวตาราง)
+    var headers = values[0];
+    var studentIdColIndex = headers.indexOf('รหัสนักศึกษา');
+    var semesterColIndex = headers.indexOf('ภาคการศึกษา');
+    var courseNameColIndex = headers.indexOf('ชื่อวิชา');
+    var teacherNameColIndex = headers.indexOf('ชื่ออาจารย์');
+    var statusColIndex = headers.indexOf('สถานะการทำแบบทดสอบ');
+    
+    // ค้นหาและอัปเดตสถานะ
+    for (var i = 1; i < values.length; i++) {
+      var row = values[i];
+      if (row[studentIdColIndex] == studentId && 
+          row[courseNameColIndex] == courseName && 
+          row[teacherNameColIndex] == teacherName && 
+          row[semesterColIndex] == semester) {
+        
+        // อัปเดตสถานะเป็น "ประเมินแล้ว"
+        sheet.getRange(i + 1, statusColIndex + 1).setValue('ประเมินแล้ว');
+        Logger.log("อัปเดตสถานะเป็น 'ประเมินแล้ว' สำหรับรายวิชา: " + courseName);
+        break;
+      }
+    }
+  } catch (error) {
+    Logger.log("เกิดข้อผิดพลาดในการอัปเดตสถานะ: " + error.toString());
+    // ไม่ return ข้อผิดพลาดเพื่อไม่ให้กระทบกับฟังก์ชัน submitEvaluation
+  }
+}
+
+// ฟังก์ชันสำหรับทดสอบ API
+function testAPI() {
+  var url = ScriptApp.getService().getUrl();
+  var ui = SpreadsheetApp.getUi();
+  
+  ui.alert(
+    'URL ของ Web App',
+    'URL สำหรับเชื่อมต่อกับเว็บไซต์: ' + url + '\n\n' +
+    'ตรวจสอบให้แน่ใจว่าได้ตั้งค่าการเผยแพร่เป็น "Anyone" หรือ "Anyone, even anonymous" แล้ว',
+    ui.ButtonSet.OK
+  );
+}
+
+// ฟังก์ชันทดสอบ
+function test() {
+  var testResult = getQuestions();
+  Logger.log(JSON.stringify(testResult));
+  return testResult;
+}
+
+// ฟังก์ชันนี้จะทำงานเมื่อเปิด Google Sheet
+function onOpen() {
+  var ui = SpreadsheetApp.getUi();
+  ui.createMenu('แบบประเมิน')
+      .addItem('ทดสอบ API', 'testAPI')
+      .addToUi();
+}

@@ -372,7 +372,7 @@
             
             coursesToEvaluate.forEach((course, index) => {
                 // ตรวจสอบสถานะการประเมิน - ใช้ includes แทนการเทียบเท่ากันแบบตรงๆ
-                const needsEvaluation = course.status.includes("ยังไม่") || course.status === "รอการประเมิน";
+                const needsEvaluation = course.status.includes("Not yet") || course.status === "รอการประเมิน";
                 
                 let statusCell = '';
                 
@@ -380,11 +380,11 @@
                     // สร้างปุ่มที่มองเห็นชัดเจน
                     statusCell = `
                         <button class="btn btn-danger evaluate-btn" data-index="${index}">
-                            คลิกเพื่อประเมิน
+                            Click to evaluate.
                         </button>
                     `;
                 } else {
-                    statusCell = `<span class="text-success fw-bold">ประเมินแล้ว</span>`;
+                    statusCell = `<span class="text-success fw-bold">Evaluated.</span>`;
                 }
                 
                 tableBody.append(`

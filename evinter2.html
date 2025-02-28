@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Evaluation System V3</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Sarabun', 'Noto Sans SC', sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .main-container {
+            flex: 1 0 auto;
+        }
+        .container {
+            max-width: 850px;
+            margin: 40px auto;
+            padding: 30px;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 35px;
+            padding-bottom: 25px;
+            border-bottom: 2px solid #e9ecef;
+            position: relative;
+        }
+        .header:after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: #0d6efd;
+            border-radius: 2px;
+        }
+        .header h2 {
+            color: #0d6efd;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px 0;
+            margin-top: 20px;
+            background-color: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            color: #6c757d;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .credit {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .credit img {
+            height: 24px;
+            margin-right: 10px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .btn-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+            border-color: #0a58ca;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #5c636a;
+            border-color: #565e64;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .form-control {
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+            transition: all 0.3s;
+        }
+        .form-control:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+        }
+        .rating-label {
+            margin-right: 10px;
+            font-weight: normal;
+            color: #495057;
+        }
+        .rating-container {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin: 15px 0;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        .rating-container:hover {
+            background-color: #e9ecef;
+        }
+        .rating-item {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: all 0.2s;
+        }
+        .rating-item:hover {
+            background-color: #e9ecef;
+        }
+        .rating-item.selected {
+            background-color: #e8f0fe;
+            border: 1px solid #0d6efd;
+        }
+        .form-check-input {
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+            margin-right: 8px;
+        }
+        .form-check-input:checked {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+        .question {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            animation: fadeIn 0.5s ease;
+        }
+        .question:last-child {
+            border-bottom: none;
+        }
+        .question label {
+            font-weight: 500;
+            color: #212529;
+            margin-bottom: 10px;
+            display: block;
+        }
+        .loader {
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #0d6efd;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 2s linear infinite;
+            margin: 30px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        #status-message {
+            text-align: center;
+            font-weight: bold;
+            margin: 20px 0;
+            color: #0d6efd;
+        }
+        .course-table {
+            margin-top: 25px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(0,0,0,0.05);
+        }
+        .table {
+            margin-bottom: 0;
+        }
+        .table th {
+            background-color: #0d6efd;
+            color: white;
+            font-weight: 500;
+            text-align: center;
+            vertical-align: middle;
+            padding: 15px;
+        }
+        .table td {
+            vertical-align: middle;
+            text-align: center;
+            padding: 15px;
+            transition: background 0.2s;
+        }
+        .table tr:hover td {
+            background-color: #f8f9fa;
+        }
+        .table-bordered {
+            border: none;
+        }
+        .table-bordered td, .table-bordered th {
+            border: 1px solid #e9ecef;
+        }
+        .evaluate-btn {
+            cursor: pointer;
+            color: white;
+            font-weight: 500;
+            width: 100%;
+            padding: 8px 15px;
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+        .evaluate-btn:hover {
+            background-color: #dc3545;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(220, 53, 69, 0.2);
+        }
+        .submitted {
+            color: #198754;
+            font-weight: 600;
+        }
+        .api-status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        .api-status.success {
+            background-color: #d1e7dd;
+            color: #0f5132;
+            border-left: 4px solid #198754;
+        }
+        .api-status.error {
+            background-color: #f8d7da;
+            color: #842029;
+            border-left: 4px solid #dc3545;
+        }
+        .debug-info {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            display: none;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        #login-page {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            border-radius: 10px;
+            animation: fadeIn 0.5s ease;
+        }
+        #login-error {
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: 500;
+        }
+        #evaluation-info {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            border-left: 4px solid #0d6efd;
+        }
+        #evaluation-info p {
+            margin-bottom: 8px;
+        }
+        #evaluation-info p span {
+            font-weight: 600;
+            color: #0d6efd;
+            margin-left: 10px;
+        }
+        #success-page {
+            text-align: center;
+            padding: 30px;
+            animation: fadeIn 0.8s ease;
+        }
+        #success-page h3 {
+            color: #198754;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        #success-page .icon {
+            font-size: 60px;
+            color: #198754;
+            margin-bottom: 20px;
+        }
+        
+        /* Language Selector Styles */
+        .language-selector {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            z-index: 1000;
+        }
+        
+        .language-btn {
+            padding: 5px 10px;
+            margin-left: 5px;
+            border-radius: 4px;
+            border: 1px solid #0d6efd;
+            background-color: white;
+            color: #0d6efd;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .language-btn:hover {
+            background-color: #f0f8ff;
+        }
+        
+        .language-btn.active {
+            background-color: #0d6efd;
+            color: white;
+        }
+        
+        /* Progress Bar Styles */
+        .progress-container {
+            margin-bottom: 25px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .progress {
+            height: 10px;
+            border-radius: 5px;
+            background-color: #e9ecef;
+        }
+        
+        .progress-bar {
+            background-color: #0d6efd;
+            border-radius: 5px;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-status {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 14px;
+            color: #6c757d;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                margin: 20px auto;
+                padding: 20px;
+            }
+            .rating-container {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .rating-item {
+                margin-right: 0;
+                width: 100%;
+            }
+            .table th, .table td {
+                padding: 10px 5px;
+                font-size: 14px;
+            }
+            .language-selector {
+                top: 10px;
+                right: 10px;
+            }
+            .language-btn {
+                padding: 3px 8px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="container">
+            <!-- Language Selector -->
+            <div class="language-selector">
+                <button class="language-btn active" data-lang="en">English</button>
+                <button class="language-btn" data-lang="zh">中文</button>
+            </div>
+
+            <div class="header">
+                <h2 class="lang-en">Teacher Evaluation System</h2>
+                <h2 class="lang-zh" style="display: none;">教师评估系统</h2>
+                <p class="text-muted lang-en">Please evaluate the teacher's instruction for the improvement of teaching and learning quality.</p>
+                <p class="text-muted lang-zh" style="display: none;">请评估教师的教学，以提高教学质量。</p>
+            </div>
+
+            <!-- Login Page -->
+            <div id="login-page">
+                <h3 class="mb-4 text-center lang-en">Login</h3>
+                <h3 class="mb-4 text-center lang-zh" style="display: none;">登录</h3>
+                <div class="mb-4">
+                    <label for="student-id" class="form-label lang-en">Student ID</label>
+                    <label for="student-id" class="form-label lang-zh" style="display: none;">学生ID</label>
+                    <input type="text" class="form-control" id="student-id" placeholder="Please enter your student ID.">
+                </div>
+                <button id="login-btn" class="btn btn-primary w-100 lang-en">Login</button>
+                <button id="login-btn-zh" class="btn btn-primary w-100 lang-zh" style="display: none;">登录</button>
+                <div id="login-error" class="mt-3 text-danger"></div>
+                <div id="api-connection-status" class="api-status"></div>
+            </div>
+
+            <!-- Courses Page -->
+            <div id="courses-page" style="display: none;">
+                <h3 class="mb-4 lang-en">Courses to be evaluated</h3>
+                <h3 class="mb-4 lang-zh" style="display: none;">需要评估的课程</h3>
+                <div class="alert alert-info">
+                    <strong class="lang-en">Student ID:</strong>
+                    <strong class="lang-zh" style="display: none;">学生ID:</strong>
+                    <span id="student-id-display"></span>
+                </div>
+                <div class="table-responsive course-table">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th class="lang-en">No.</th>
+                                <th class="lang-zh" style="display: none;">序号</th>
+                                <th class="lang-en">Course Name</th>
+                                <th class="lang-zh" style="display: none;">课程名称</th>
+                                <th class="lang-en">Instructor</th>
+                                <th class="lang-zh" style="display: none;">教师</th>
+                                <th class="lang-en">Semester</th>
+                                <th class="lang-zh" style="display: none;">学期</th>
+                                <th class="lang-en">Evaluation Status</th>
+                                <th class="lang-zh" style="display: none;">评估状态</th>
+                            </tr>
+                        </thead>
+                        <tbody id="courses-table-body">
+                            <!-- Course data will be added here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                <button id="logout-btn" class="btn btn-secondary mt-4 lang-en">Logout</button>
+                <button id="logout-btn-zh" class="btn btn-secondary mt-4 lang-zh" style="display: none;">退出</button>
+            </div>
+                
+            <!-- Evaluation Page -->
+            <div id="evaluation-page" style="display: none;">
+                <h3 class="mb-4 text-center lang-en">Teaching Evaluation Form</h3>
+                <h3 class="mb-4 text-center lang-zh" style="display: none;">教学评估表</h3>
+                
+                <!-- Progress Bar -->
+                <div class="progress-container">
+                    <div class="progress">
+                        <div class="progress-bar" id="evaluation-progress" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <div class="progress-status">
+                        <span class="lang-en">Progress</span>
+                        <span class="lang-zh" style="display: none;">进度</span>
+                        <span id="progress-text">0/0</span>
+                    </div>
+                </div>
+                
+                <div id="evaluation-info" class="mb-4">
+                    <p>
+                        <strong class="lang-en">Student ID:</strong>
+                        <strong class="lang-zh" style="display: none;">学生ID:</strong>
+                        <span id="eval-student-id"></span>
+                    </p>
+                    <p>
+                        <strong class="lang-en">Course:</strong>
+                        <strong class="lang-zh" style="display: none;">课程:</strong>
+                        <span id="eval-course"></span>
+                    </p>
+                    <p>
+                        <strong class="lang-en">Instructor:</strong>
+                        <strong class="lang-zh" style="display: none;">教师:</strong>
+                        <span id="eval-teacher"></span>
+                    </p>
+                    <p>
+                        <strong class="lang-en">Semester:</strong>
+                        <strong class="lang-zh" style="display: none;">学期:</strong>
+                        <span id="eval-semester"></span>
+                    </p>
+                </div>
+                
+                <div id="evaluation-form">
+                    <!-- Questions will be added here by JavaScript -->
+                </div>
+                
+                <div class="mt-4 d-flex justify-content-between">
+                    <button id="back-to-courses" class="btn btn-secondary lang-en">Back</button>
+                    <button id="back-to-courses-zh" class="btn btn-secondary lang-zh" style="display: none;">返回</button>
+                    <button id="submit-evaluation" class="btn btn-primary lang-en">Submit Evaluation Form</button>
+                    <button id="submit-evaluation-zh" class="btn btn-primary lang-zh" style="display: none;">提交评估表</button>
+                </div>
+                
+                <div id="evaluation-status" class="text-center mt-3"></div>
+            </div>
+
+            <!-- Loading Status -->
+            <div id="loading" style="display: none;">
+                <div class="loader"></div>
+                <div id="status-message" class="lang-en">Loading Data...</div>
+                <div id="status-message-zh" class="lang-zh" style="display: none;">加载数据...</div>
+            </div>
+
+            <!-- Success Page -->
+            <div id="success-page" style="display: none;">
+                <div class="text-center">
+                    <div class="icon">✓</div>
+                    <h3 class="text-success mb-4 lang-en">Evaluation form submitted successfully.</h3>
+                    <h3 class="text-success mb-4 lang-zh" style="display: none;">评估表提交成功。</h3>
+                    <p class="lang-en">Thank you for providing useful information.</p>
+                    <p class="lang-zh" style="display: none;">感谢您提供有用的信息。</p>
+                    <button id="back-to-courses-success" class="btn btn-primary mt-4 lang-en">Back to Course Page</button>
+                    <button id="back-to-courses-success-zh" class="btn btn-primary mt-4 lang-zh" style="display: none;">返回课程页面</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer with Credit -->
+    <footer class="footer">
+        <div class="container">
+            <div class="credit">
+                <span class="lang-en">© 2025 Office of Information Technology. All rights reserved.</span>
+                <span class="lang-zh" style="display: none;">© 2025 信息技术办公室。保留所有权利。</span>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script>
+        // Google Sheets API URL
+        const API_URL = "https://script.google.com/macros/s/AKfycbyO6WqGusf-w0gzedIOfdD7FfzhIY3awhrQixFIoKHLTnAn4vN3lgMfvcZahuf3TYYYQQ/exec";
+        
+        // Essential data for evaluation
+        let currentStudentId = '';
+        let coursesToEvaluate = [];
+        let questions = [];
+        let questionsZh = []; // Chinese questions
+        let currentCourse = null;
+        let currentLanguage = 'en'; // Default language is English
+        let answeredQuestions = 0; // Number of questions answered
+        
+        // Text translations
+        const translations = {
+            en: {
+                evaluateButton: 'Click to evaluate',
+                evaluated: 'Evaluated',
+                pleaseEnterStudentId: 'Please enter your student ID.',
+                verifyingData: 'Verifying data...',
+                studentNotFound: 'Student information not found in the system. Please verify the ID or contact the instructor.',
+                connectionError: 'Connection error:',
+                pleaseAnswerQuestion: 'Please answer question number',
+                submittingForm: 'Submitting evaluation form...',
+                errorOccurred: 'Error:',
+                loading: 'Loading...',
+                formReady: 'Evaluation form is ready.',
+                veryPoor: '1 Very Poor',
+                poor: '2 Poor',
+                normal: '3 Normal',
+                good: '4 Good',
+                excellent: '5 Excellent',
+                provideFeedback: 'Please provide your feedback.'
+            },
+            zh: {
+                evaluateButton: '点击评估',
+                evaluated: '已评估',
+                pleaseEnterStudentId: '请输入您的学生ID。',
+                verifyingData: '验证数据...',
+                studentNotFound: '系统中找不到学生信息。请验证ID或联系教师。',
+                connectionError: '连接错误:',
+                pleaseAnswerQuestion: '请回答问题编号',
+                submittingForm: '正在提交评估表...',
+                errorOccurred: '错误:',
+                loading: '加载中...',
+                formReady: '评估表已准备就绪。',
+                veryPoor: '1 非常差',
+                poor: '2 差',
+                normal: '3 一般',
+                good: '4 好',
+                excellent: '5 非常好',
+                provideFeedback: '请提供您的反馈。'
+            }
+        };
+
+        // When document is loaded
+        $(document).ready(function() {
+            // Test API connection
+            testApiConnection();
+            
+            // Language selector buttons
+            $('.language-btn').click(function() {
+                const lang = $(this).data('lang');
+                changeLanguage(lang);
+            });
+            
+            // Login button
+            $('#login-btn, #login-btn-zh').click(function() {
+                login();
+            });
+
+            // Enter key for login
+            $('#student-id').keypress(function(e) {
+                if (e.which === 13) {
+                    login();
+                }
+            });
+
+            // Logout button
+            $('#logout-btn, #logout-btn-zh').click(function() {
+                logout();
+            });
+
+            // Back to courses button
+            $('#back-to-courses, #back-to-courses-zh, #back-to-courses-success, #back-to-courses-success-zh').click(function() {
+                showPage('courses-page');
+            });
+
+            // Submit evaluation button
+            $('#submit-evaluation, #submit-evaluation-zh').click(function() {
+                submitEvaluation();
+            });
+
+            // Evaluate button delegation
+            $(document).on('click', '.evaluate-btn', function() {
+                const index = $(this).data('index');
+                console.log("Button clicked! Index:", index);
+                openEvaluationForm(index);
+            });
+            
+            // Rating item selection
+            $(document).on('click', '.rating-item', function() {
+                // Select the input inside the clicked item
+                const input = $(this).find('input');
+                input.prop('checked', true);
+                
+                // Add selected class
+                $(this).siblings().removeClass('selected');
+                $(this).addClass('selected');
+                
+                // Update progress
+                updateProgress();
+            });
+            
+            // Textarea input tracking for progress
+            $(document).on('input', 'textarea', function() {
+                updateProgress();
+            });
+        });
+        
+        // Function to change language
+        function changeLanguage(lang) {
+            currentLanguage = lang;
+            
+            // Update active language button
+            $('.language-btn').removeClass('active');
+            $(`.language-btn[data-lang="${lang}"]`).addClass('active');
+            
+            // Show/hide language-specific elements
+            $('.lang-en, .lang-zh').hide();
+            $(`.lang-${lang}`).show();
+            
+            // Update placeholder text based on language
+            updatePlaceholders();
+            
+            // If courses table is visible, update it
+            if ($('#courses-page').is(':visible')) {
+                populateCoursesTable();
+            }
+            
+            // If evaluation form is visible, update it
+            if ($('#evaluation-page').is(':visible')) {
+                createEvaluationForm();
+            }
+        }
+        
+        // Update input placeholders based on language
+        function updatePlaceholders() {
+            if (currentLanguage === 'en') {
+                $('#student-id').attr('placeholder', 'Please enter your student ID.');
+            } else {
+                $('#student-id').attr('placeholder', '请输入您的学生ID。');
+            }
+        }
+        
+        // Function to update progress bar
+        function updateProgress() {
+            if (questions.length === 0) return;
+            
+            // Count answered questions (ratings only, not text area)
+            answeredQuestions = 0;
+            
+            questions.forEach((_, index) => {
+                if (index < questions.length - 1) { // Rating questions
+                    if ($(`input[name="q${index}"]:checked`).length > 0) {
+                        answeredQuestions++;
+                    }
+                }
+            });
+            
+            // Calculate progress percentage
+            const totalRequiredQuestions = questions.length - 1;
+            const progress = (answeredQuestions / totalRequiredQuestions) * 100;
+            
+            // Update progress bar
+            $('#evaluation-progress').css('width', progress + '%').attr('aria-valuenow', progress);
+            $('#progress-text').text(`${answeredQuestions}/${totalRequiredQuestions}`);
+            
+            return answeredQuestions === totalRequiredQuestions;
+        }
+
+        // Function to test API connection
+        function testApiConnection() {
+            const apiStatus = $('#api-connection-status');
+            apiStatus.removeClass('success error').hide();
+            
+            // Test calling API for questions
+            fetch(`${API_URL}?action=getQuestions`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        // Show error message
+                        apiStatus.addClass('error').text('API connection problem: ' + data.message).show();
+                        console.error('API error:', data);
+                    } else {
+                        // Show success message (hide after 3 seconds)
+                        apiStatus.addClass('success').text(translations[currentLanguage].formReady).show();
+                        setTimeout(() => {
+                            apiStatus.fadeOut();
+                        }, 3000);
+                    }
+                })
+                .catch(error => {
+                    // Show error message
+                    apiStatus.addClass('error').text('Cannot connect to API: ' + error.message).show();
+                    console.error('API connection error:', error);
+                });
+        }
+
+        // Function to login
+        function login() {
+            const studentId = $('#student-id').val().trim();
+            
+            if (studentId === '') {
+                $('#login-error').text(translations[currentLanguage].pleaseEnterStudentId);
+                return;
+            }
+            
+            $('#login-error').text('');
+            showLoading(translations[currentLanguage].verifyingData);
+            
+            // Call API to get student courses
+            fetch(`${API_URL}?action=getStudentCourses&studentId=${studentId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Student courses data:', data);
+                    
+                    if (data.error) {
+                        hideLoading();
+                        $('#login-error').text(translations[currentLanguage].errorOccurred + ' ' + data.message);
+                        return;
+                    }
+                    
+                    if (!data.courses || data.courses.length === 0) {
+                        hideLoading();
+                        $('#login-error').text(translations[currentLanguage].studentNotFound);
+                        return;
+                    }
+                    
+                    currentStudentId = studentId;
+                    coursesToEvaluate = data.courses;
+                    
+                    // Display student ID
+                    $('#student-id-display').text(studentId);
+                    
+                    // Create courses table
+                    populateCoursesTable();
+                    
+                    // Get questions
+                    return fetch(`${API_URL}?action=getQuestions`);
+                })
+                .then(response => {
+                    if (response && !response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    if (response) return response.json();
+                })
+                .then(data => {
+                    if (data) {
+                        console.log('Questions data:', data);
+                        
+                        if (data.error) {
+                            hideLoading();
+                            $('#login-error').text(translations[currentLanguage].errorOccurred + ' ' + data.message);
+                            return;
+                        }
+                        
+                        // Separate English and Chinese questions
+                        questions = data.questions;
+                        
+                        // If Chinese questions are included in the response
+                        if (data.questionsZh) {
+                            questionsZh = data.questionsZh;
+                        } else {
+                            // If Chinese questions are in column 2 of the sheet, they may be in the same array
+                            // This depends on how your API returns data, adjust as needed
+                            questionsZh = data.questionsColumn2 || [];
+                        }
+                        
+                        hideLoading();
+                        showPage('courses-page');
+                    }
+                })
+                .catch(error => {
+                    console.error('Login error:', error);
+                    hideLoading();
+                    $('#login-error').text(translations[currentLanguage].connectionError + ' ' + error.message);
+                });
+        }
+
+        // Function to display courses table
+        function populateCoursesTable() {
+            const tableBody = $('#courses-table-body');
+            tableBody.empty();
+            
+            coursesToEvaluate.forEach((course, index) => {
+                // Check evaluation status
+                const needsEvaluation = course.status.includes("Not yet") || course.status === "รอการประเมิน";
+                
+                let statusCell = '';
+                
+                if (needsEvaluation) {
+                    // Create button
+                    statusCell = `
+                        <button class="btn btn-danger evaluate-btn" data-index="${index}">
+                            ${translations[currentLanguage].evaluateButton}
+                        </button>
+                    `;
+                } else {
+                    statusCell = `<span class="text-success fw-bold">${translations[currentLanguage].evaluated}</span>`;
+                }
+                
+                tableBody.append(`
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${course.courseName}</td>
+                        <td>${course.teacherName}</td>
+                        <td>${course.semester}</td>
+                        <td>${statusCell}</td>
+                    </tr>
+                `);
+            });
+            
+            console.log('Courses to evaluate:', coursesToEvaluate);
+        }
+
+        // Function to open evaluation form
+        function openEvaluationForm(courseIndex) {
+            currentCourse = coursesToEvaluate[courseIndex];
+            console.log('Opening evaluation form for course:', currentCourse);
+            
+            // Display course info
+            $('#eval-student-id').text(currentStudentId);
+            $('#eval-course').text(currentCourse.courseName);
+            $('#eval-teacher').text(currentCourse.teacherName);
+            $('#eval-semester').text(currentCourse.semester);
+            
+            // Create evaluation form
+            createEvaluationForm();
+            
+            // Reset progress
+            answeredQuestions = 0;
+            updateProgress();
+            
+            // Show evaluation page
+            showPage('evaluation-page');
+        }
+
+        // Function to create evaluation form
+        function createEvaluationForm() {
+            const form = $('#evaluation-form');
+            form.empty();
+            
+            // Use the appropriate question set based on language
+            const questionSet = (currentLanguage === 'en') ? questions : questionsZh;
+            
+            questionSet.forEach((question, index) => {
+                const isLastQuestion = index === questionSet.length - 1;
+                const questionHtml = isLastQuestion ? 
+                    createTextAreaQuestion(question, index) : 
+                    createRatingQuestion(question, index);
+                
+                form.append(questionHtml);
+            });
+        }
+
+        // Create rating question
+        function createRatingQuestion(question, index) {
+            return `
+                <div class="question">
+                    <div class="form-group">
+                        <label><strong>${index + 1}. ${question}</strong></label>
+                        <div class="rating-container">
+                            <div class="rating-item">
+                                <input type="radio" name="q${index}" id="q${index}_1" value="1" class="form-check-input" required>
+                                <label for="q${index}_1" class="rating-label">${translations[currentLanguage].veryPoor}</label>
+                            </div>
+                            <div class="rating-item">
+                                <input type="radio" name="q${index}" id="q${index}_2" value="2" class="form-check-input" required>
+                                <label for="q${index}_2" class="rating-label">${translations[currentLanguage].poor}</label>
+                            </div>
+                            <div class="rating-item">
+                                <input type="radio" name="q${index}" id="q${index}_3" value="3" class="form-check-input" required>
+                                <label for="q${index}_3" class="rating-label">${translations[currentLanguage].normal}</label>
+                            </div>
+                            <div class="rating-item">
+                                <input type="radio" name="q${index}" id="q${index}_4" value="4" class="form-check-input" required>
+                                <label for="q${index}_4" class="rating-label">${translations[currentLanguage].good}</label>
+                            </div>
+                            <div class="rating-item">
+                                <input type="radio" name="q${index}" id="q${index}_5" value="5" class="form-check-input" required>
+                                <label for="q${index}_5" class="rating-label">${translations[currentLanguage].excellent}</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Create text area question
+        function createTextAreaQuestion(question, index) {
+            return `
+                <div class="question">
+                    <div class="form-group">
+                        <label for="q${index}"><strong>${index + 1}. ${question}</strong></label>
+                        <textarea class="form-control mt-2" id="q${index}" name="q${index}" rows="4" placeholder="${translations[currentLanguage].provideFeedback}"></textarea>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Function to submit evaluation
+        function submitEvaluation() {
+            // Check if all questions are answered
+            const unansweredQuestions = [];
+            
+            questions.forEach((_, index) => {
+                if (index < questions.length - 1) { // Rating questions
+                    if ($(`input[name="q${index}"]:checked`).length === 0) {
+                        unansweredQuestions.push(index + 1);
+                    }
+                }
+            });
+            
+            if (unansweredQuestions.length > 0) {
+                $('#evaluation-status').html(`<div class="alert alert-danger">${translations[currentLanguage].pleaseAnswerQuestion} ${unansweredQuestions.join(', ')}</div>`);
+                return;
+            }
+            
+            // Collect answers
+            const answers = [];
+            
+            questions.forEach((_, index) => {
+                if (index < questions.length - 1) { // Rating questions
+                    answers.push($(`input[name="q${index}"]:checked`).val());
+                } else { // Text area question
+                    answers.push($(`#q${index}`).val());
+                }
+            });
+            
+            // Create data to send
+            const evaluationData = {
+                studentId: currentStudentId,
+                courseName: currentCourse.courseName,
+                teacherName: currentCourse.teacherName,
+                semester: currentCourse.semester,
+                answers: answers,
+                language: currentLanguage // Include language so API knows which language was used
+            };
+            
+            showLoading(translations[currentLanguage].submittingForm);
+            
+            console.log('Sending evaluation data:', evaluationData);
+            
+            // Send data to API using mode: 'no-cors' to avoid CORS issues
+            fetch(API_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(evaluationData)
+            })
+            .then(response => {
+                // In no-cors mode, we can't access the response details
+                // So we assume success
+                hideLoading();
+                console.log('Form submitted successfully');
+                
+                // Update evaluation status
+                const courseIndex = coursesToEvaluate.findIndex(c => 
+                    c.courseName === currentCourse.courseName && 
+                    c.teacherName === currentCourse.teacherName);
+                
+                if (courseIndex !== -1) {
+                    coursesToEvaluate[courseIndex].status = 'Evaluated.';
+                }
+                
+                showPage('success-page');
+            })
+            .catch(error => {
+                hideLoading();
+                console.error('Submit evaluation error:', error);
+                $('#evaluation-status').html(`<div class="alert alert-danger">${translations[currentLanguage].errorOccurred} ${error.message}</div>`);
+            });
+        }
+
+        // Function to logout
+        function logout() {
+            currentStudentId = '';
+            coursesToEvaluate = [];
+            currentCourse = null;
+            $('#student-id').val('');
+            $('#login-error').text('');
+            showPage('login-page');
+        }
+
+        // Function to show pages
+        function showPage(pageId) {
+            // Hide all pages
+            $('#login-page, #courses-page, #evaluation-page, #loading, #success-page').hide();
+            
+            // Show requested page
+            $(`#${pageId}`).show();
+            
+            // For courses page, update table
+            if (pageId === 'courses-page') {
+                populateCoursesTable();
+            }
+        }
+
+        // Function to show loading
+        function showLoading(message) {
+            if (currentLanguage === 'en') {
+                $('#status-message').text(message || translations.en.loading);
+            } else {
+                $('#status-message-zh').text(message || translations.zh.loading);
+            }
+            $('#loading').show();
+        }
+
+        // Function to hide loading
+        function hideLoading() {
+            $('#loading').hide();
+        }
+    </script>
+</body>
+</html>

@@ -430,39 +430,39 @@
                 <div id="api-connection-status" class="api-status"></div>
             </div>
 
-            <!-- Courses Page -->
-            <div id="courses-page" style="display: none;">
-                <h3 class="mb-4 lang-en">Courses to be evaluated</h3>
-                <h3 class="mb-4 lang-zh" style="display: none;">需要评估的课程</h3>
-                <div class="alert alert-info">
-                    <strong class="lang-en">Student ID:</strong>
-                    <strong class="lang-zh" style="display: none;">学生ID:</strong>
-                    <span id="student-id-display"></span>
-                </div>
-                <div class="table-responsive course-table">
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th class="lang-en">No.</th>
-                                <th class="lang-zh" style="display: none;">序号</th>
-                                <th class="lang-en">Course Name</th>
-                                <th class="lang-zh" style="display: none;">课程名称</th>
-                                <th class="lang-en">Instructor</th>
-                                <th class="lang-zh" style="display: none;">教师</th>
-                                <th class="lang-en">Semester</th>
-                                <th class="lang-zh" style="display: none;">学期</th>
-                                <th class="lang-en">Evaluation Status</th>
-                                <th class="lang-zh" style="display: none;">评估状态</th>
-                            </tr>
-                        </thead>
-                        <tbody id="courses-table-body">
-                            <!-- Course data will be added here by JavaScript -->
-                        </tbody>
-                    </table>
-                </div>
-                <button id="logout-btn" class="btn btn-secondary mt-4 lang-en">Logout</button>
-                <button id="logout-btn-zh" class="btn btn-secondary mt-4 lang-zh" style="display: none;">退出</button>
-            </div>
+         <!-- Courses Page -->
+<div id="courses-page" style="display: none;">
+    <h3 class="mb-4 lang-en">Courses to be evaluated</h3>
+    <h3 class="mb-4 lang-zh" style="display: none;">需要评估的课程</h3>
+    <div class="alert alert-info">
+        <strong class="lang-en">Student ID:</strong>
+        <strong class="lang-zh" style="display: none;">学生ID:</strong>
+        <span id="student-id-display"></span>
+    </div>
+    <div class="table-responsive course-table">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th class="lang-en">No.</th>
+                    <th class="lang-zh" style="display: none;">序号</th>
+                    <th class="lang-en text-start">Course Name</th>
+                    <th class="lang-zh text-start" style="display: none;">课程名称</th>
+                    <th class="lang-en text-start">Instructor</th>
+                    <th class="lang-zh text-start" style="display: none;">教师</th>
+                    <th class="lang-en">Semester</th>
+                    <th class="lang-zh" style="display: none;">学期</th>
+                    <th class="lang-en">Evaluation Status</th>
+                    <th class="lang-zh" style="display: none;">评估状态</th>
+                </tr>
+            </thead>
+            <tbody id="courses-table-body">
+                <!-- Course data will be added here by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+    <button id="logout-btn" class="btn btn-secondary mt-4 lang-en">Logout</button>
+    <button id="logout-btn-zh" class="btn btn-secondary mt-4 lang-zh" style="display: none;">退出</button>
+</div>
                 
             <!-- Evaluation Page -->
             <div id="evaluation-page" style="display: none;">
@@ -851,41 +851,41 @@
                 });
         }
 
-        // Function to display courses table
-        function populateCoursesTable() {
-            const tableBody = $('#courses-table-body');
-            tableBody.empty();
-            
-            coursesToEvaluate.forEach((course, index) => {
-                // Check evaluation status
-                const needsEvaluation = course.status.includes("Not yet") || course.status === "รอการประเมิน";
-                
-                let statusCell = '';
-                
-                if (needsEvaluation) {
-                    // Create button
-                    statusCell = `
-                        <button class="btn btn-danger evaluate-btn" data-index="${index}">
-                            ${translations[currentLanguage].evaluateButton}
-                        </button>
-                    `;
-                } else {
-                    statusCell = `<span class="text-success fw-bold">${translations[currentLanguage].evaluated}</span>`;
-                }
-                
-                tableBody.append(`
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td>${course.courseName}</td>
-                        <td>${course.teacherName}</td>
-                        <td>${course.semester}</td>
-                        <td>${statusCell}</td>
-                    </tr>
-                `);
-            });
-            
-            console.log('Courses to evaluate:', coursesToEvaluate);
+      // Function to display courses table
+function populateCoursesTable() {
+    const tableBody = $('#courses-table-body');
+    tableBody.empty();
+    
+    coursesToEvaluate.forEach((course, index) => {
+        // Check evaluation status
+        const needsEvaluation = course.status.includes("Not yet") || course.status === "รอการประเมิน";
+        
+        let statusCell = '';
+        
+        if (needsEvaluation) {
+            // Create button
+            statusCell = `
+                <button class="btn btn-danger evaluate-btn" data-index="${index}">
+                    ${translations[currentLanguage].evaluateButton}
+                </button>
+            `;
+        } else {
+            statusCell = `<span class="text-success fw-bold">${translations[currentLanguage].evaluated}</span>`;
         }
+        
+        tableBody.append(`
+            <tr>
+                <td>${index + 1}</td>
+                <td class="text-start">${course.courseName}</td>
+                <td class="text-start">${course.teacherName}</td>
+                <td>${course.semester}</td>
+                <td>${statusCell}</td>
+            </tr>
+        `);
+    });
+    
+    console.log('Courses to evaluate:', coursesToEvaluate);
+}
 
         // Function to open evaluation form
         function openEvaluationForm(courseIndex) {

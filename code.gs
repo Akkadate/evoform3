@@ -437,17 +437,17 @@ function updateEvaluationStatus(studentId, courseName, teacherName, semester) {
       var columnLetter = columnToLetter(statusColIndex + 1);  // แปลงเลขคอลัมน์เป็นตัวอักษร (A, B, C, ...)
       var cellAddress = columnLetter + rowIndexToUpdate;
       
-      Logger.log("กำลังอัปเดตเซลล์ " + cellAddress + " เป็นค่า 'ประเมินแล้ว'");
+      Logger.log("กำลังอัปเดตเซลล์ " + cellAddress + " เป็นค่า 'Evaluated'");
       
       // อัปเดตค่าในเซลล์
       var cell = sheet.getRange(cellAddress);
-      cell.setValue("ประเมินแล้ว");
+      cell.setValue("Evaluated");
       
       // ตรวจสอบว่าอัปเดตสำเร็จหรือไม่
       var updatedValue = cell.getValue();
       Logger.log("ค่าหลังอัปเดต: " + updatedValue);
       
-      if (updatedValue === "ประเมินแล้ว") {
+      if (updatedValue === "Evaluated") {
         Logger.log("อัปเดตสถานะสำเร็จ");
         return true;
       } else {
@@ -461,7 +461,7 @@ function updateEvaluationStatus(studentId, courseName, teacherName, semester) {
       try {
         Logger.log("ลองใช้เมธอด getRange(row, column) แทน");
         var statusCell = sheet.getRange(rowIndexToUpdate, statusColIndex + 1);
-        statusCell.setValue("ประเมินแล้ว");
+        statusCell.setValue("Evaluated");
         
         Logger.log("อัปเดตค่าด้วยวิธีสำรองสำเร็จ");
         return true;

@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -5,7 +6,7 @@
     <title>Teacher Evaluation System V3</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body {
             font-family: 'Sarabun', sans-serif;
@@ -82,6 +83,8 @@
             border-color: #0d6efd;
             box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
         }
+        
+        /* ปรับปรุงส่วนการให้คะแนน */
         .rating-label {
             margin-right: 10px;
             font-weight: normal;
@@ -106,29 +109,30 @@
             margin-right: 15px;
             margin-bottom: 10px;
             cursor: pointer;
-            padding: 5px 10px;
+            padding: 8px 15px;
             border-radius: 5px;
             transition: all 0.2s;
+            border: 1px solid transparent;
         }
         .rating-item:hover {
             background-color: #e9ecef;
         }
-        /* ปรับปรุงการแสดงผลของตัวเลือกคะแนน */
+        /* ปรับปรุงส่วนเรทติ้ง - เพิ่มไอคอนและสี */
+        .rating-icon {
+            font-size: 18px;
+            margin-right: 5px;
+        }
+        .rating-1 .rating-icon { color: #dc3545; }  /* สีแดง */
+        .rating-2 .rating-icon { color: #fd7e14; }  /* สีส้ม */
+        .rating-3 .rating-icon { color: #ffc107; }  /* สีเหลือง */
+        .rating-4 .rating-icon { color: #20c997; }  /* สีฟ้าอมเขียว */
+        .rating-5 .rating-icon { color: #198754; }  /* สีเขียว */
+        
         .rating-item.selected {
-            background-color: #e3f2fd;
-            border: 1px solid #90caf9;
+            background-color: #e8f0fe;
+            border: 1px solid #0d6efd;
+            font-weight: 600;
         }
-        .rating-item.selected-1 { background-color: #ffebee; }
-        .rating-item.selected-2 { background-color: #fff8e1; }
-        .rating-item.selected-3 { background-color: #e8f5e9; }
-        .rating-item.selected-4 { background-color: #e1f5fe; }
-        .rating-item.selected-5 { background-color: #e8f5e9; }
-        
-        .rating-emoji {
-            font-size: 1.5rem;
-            margin-right: 8px;
-        }
-        
         .form-check-input {
             cursor: pointer;
             width: 18px;
@@ -139,6 +143,8 @@
             background-color: #0d6efd;
             border-color: #0d6efd;
         }
+        
+        /* คำถามในแบบประเมิน */
         .question {
             margin-bottom: 30px;
             padding-bottom: 20px;
@@ -154,6 +160,76 @@
             margin-bottom: 10px;
             display: block;
         }
+        
+        /* แถบความคืบหน้า */
+        .progress-container {
+            margin-bottom: 25px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .progress {
+            height: 10px;
+            border-radius: 5px;
+            background-color: #e9ecef;
+        }
+        .progress-bar {
+            background-color: #0d6efd;
+            border-radius: 5px;
+            transition: width 0.3s ease;
+        }
+        .progress-status {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 14px;
+            color: #6c757d;
+        }
+        
+        /* ตัวช่วยเหลือ (Tooltips) */
+        .help-tip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+            margin-left: 5px;
+            color: #0d6efd;
+            font-size: 16px;
+        }
+        .help-tip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 14px;
+            font-weight: normal;
+        }
+        .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #333 transparent transparent transparent;
+        }
+        
+        /* ส่วนอื่นๆ ของ UI */
         .loader {
             border: 6px solid #f3f3f3;
             border-top: 6px solid #0d6efd;
@@ -177,6 +253,8 @@
             margin: 20px 0;
             color: #0d6efd;
         }
+        
+        /* ตาราง */
         .course-table {
             margin-top: 25px;
             border-radius: 10px;
@@ -227,6 +305,8 @@
             color: #198754;
             font-weight: 600;
         }
+        
+        /* สถานะ API */
         .api-status {
             margin-top: 20px;
             padding: 15px;
@@ -244,6 +324,8 @@
             color: #842029;
             border-left: 4px solid #dc3545;
         }
+        
+        /* ส่วนดีบั๊ก */
         .debug-info {
             margin-top: 30px;
             padding: 15px;
@@ -255,6 +337,8 @@
             max-height: 300px;
             overflow-y: auto;
         }
+        
+        /* หน้าล็อกอิน */
         #login-page {
             max-width: 500px;
             margin: 0 auto;
@@ -267,6 +351,8 @@
             border-radius: 5px;
             font-weight: 500;
         }
+        
+        /* ข้อมูลรายวิชาและแบบประเมิน */
         #evaluation-info {
             background-color: #f8f9fa;
             padding: 20px;
@@ -282,6 +368,8 @@
             color: #0d6efd;
             margin-left: 10px;
         }
+        
+        /* หน้าสำเร็จ */
         #success-page {
             text-align: center;
             padding: 30px;
@@ -298,51 +386,15 @@
             margin-bottom: 20px;
         }
         
-        /* แถบแสดงความคืบหน้า */
-        .progress-container {
-            margin: 20px 0 30px;
-        }
-        .progress {
-            height: 10px;
-            border-radius: 10px;
-        }
-        
-        /* ไอคอนช่วยเหลือ */
-        .help-icon {
-            color: #6c757d;
-            margin-left: 8px;
-            cursor: pointer;
-            transition: color 0.3s;
-        }
-        .help-icon:hover {
-            color: #0d6efd;
-        }
-        
-        /* ปุ่มสลับภาษา */
-        .language-toggle {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 100;
-        }
-        .language-toggle .btn {
-            padding: 5px 12px;
-        }
-        
-        /* ข้อความช่วยเหลือ */
-        .tooltip-inner {
-            max-width: 300px;
-            padding: 10px;
-            background-color: #343a40;
-            border-radius: 6px;
-            font-family: 'Sarabun', sans-serif;
-        }
-        
-        /* รองรับการแสดงผลบนมือถือ */
+        /* Responsive adjustments */
         @media (max-width: 768px) {
             .container {
                 margin: 20px auto;
                 padding: 20px;
+                width: 95%;
+            }
+            .header h2 {
+                font-size: 24px;
             }
             .rating-container {
                 flex-direction: column;
@@ -351,51 +403,47 @@
             .rating-item {
                 margin-right: 0;
                 width: 100%;
-                justify-content: flex-start;
+                margin-bottom: 8px;
             }
             .table th, .table td {
                 padding: 10px 5px;
                 font-size: 14px;
             }
-            .language-toggle {
-                position: relative;
-                top: 0;
-                right: 0;
-                text-align: right;
-                margin-bottom: 15px;
+            .progress-container {
+                padding: 10px;
+            }
+            .help-tip .tooltip-text {
+                width: 150px;
+                font-size: 12px;
             }
         }
         
-        @media (max-width: 576px) {
+        @media (max-width: 480px) {
             .header h2 {
-                font-size: 1.5rem;
+                font-size: 20px;
             }
-            .rating-emoji {
-                font-size: 1.2rem;
-            }
-            .question label {
-                font-size: 0.95rem;
+            .btn {
+                padding: 8px 16px;
+                font-size: 14px;
             }
             .table {
-                font-size: 0.85rem;
+                font-size: 13px;
             }
-            .table th, .table td {
-                padding: 8px 4px;
+            .mt-4.d-flex {
+                flex-direction: column;
             }
-            .progress-container {
-                margin: 15px 0 20px;
+            .mt-4.d-flex .btn {
+                margin-bottom: 10px;
+                width: 100%;
+            }
+            #evaluation-info {
+                padding: 15px;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- ปุ่มสลับภาษา -->
-        <div class="language-toggle">
-            <button id="lang-th" class="btn btn-sm btn-outline-primary active">TH</button>
-            <button id="lang-en" class="btn btn-sm btn-outline-primary">EN</button>
-        </div>
-        
         <div class="header">
             <h2>Teacher Evaluation System</h2>
             <p class="text-muted">Please evaluate the teacher's instruction for the improvement of teaching and learning quality.</p>
@@ -406,7 +454,13 @@
             <h3 class="mb-4 text-center">Login</h3>
             <div class="mb-4">
                 <label for="student-id" class="form-label">Student ID</label>
-                <input type="text" class="form-control" id="student-id" placeholder="Please enter your student ID.">
+                <div class="position-relative">
+                    <input type="text" class="form-control" id="student-id" placeholder="Please enter your student ID.">
+                    <div class="help-tip">
+                        <i class="fas fa-question-circle"></i>
+                        <span class="tooltip-text">Enter your student ID to access your courses for evaluation</span>
+                    </div>
+                </div>
             </div>
             <button id="login-btn" class="btn btn-primary w-100">Login</button>
             <div id="login-error" class="mt-3 text-danger"></div>
@@ -418,6 +472,10 @@
             <h3 class="mb-4">Courses to be evaluated</h3>
             <div class="alert alert-info">
                 <strong>Student ID:</strong> <span id="student-id-display"></span>
+                <div class="help-tip">
+                    <i class="fas fa-info-circle"></i>
+                    <span class="tooltip-text">These are all the courses you have registered for and need to evaluate</span>
+                </div>
             </div>
             <div class="table-responsive course-table">
                 <table class="table table-bordered">
@@ -448,14 +506,14 @@
         <div id="evaluation-page" style="display: none;">
             <h3 class="mb-4 text-center">Teaching Evaluation Form</h3>
             
-            <!-- แถบแสดงความคืบหน้า -->
+            <!-- แถบความคืบหน้า -->
             <div class="progress-container">
-                <div class="d-flex justify-content-between mb-1">
-                    <span>Progress</span>
-                    <span id="progress-text">0%</span>
-                </div>
                 <div class="progress">
-                    <div id="progress-bar" class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    <div class="progress-bar" id="evaluation-progress" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <div class="progress-status">
+                    <span>Progress</span>
+                    <span id="progress-text">0/0</span>
                 </div>
             </div>
             
@@ -464,6 +522,10 @@
                 <p><strong>Course:</strong><span id="eval-course"></span></p>
                 <p><strong>Instructor:</strong><span id="eval-teacher"></span></p>
                 <p><strong>Semester:</strong><span id="eval-semester"></span></p>
+                <div class="help-tip">
+                    <i class="fas fa-lightbulb"></i>
+                    <span class="tooltip-text">Please evaluate all items to help improve teaching quality</span>
+                </div>
             </div>
             
             <div id="evaluation-form">
@@ -496,10 +558,9 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
         // ข้อมูลเชื่อมต่อกับ Google Sheets API
-      const API_URL = "https://script.google.com/macros/s/AKfycbyO6WqGusf-w0gzedIOfdD7FfzhIY3awhrQixFIoKHLTnAn4vN3lgMfvcZahuf3TYYYQQ/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbyO6WqGusf-w0gzedIOfdD7FfzhIY3awhrQixFIoKHLTnAn4vN3lgMfvcZahuf3TYYYQQ/exec";
         
         // ข้อมูลที่จำเป็นสำหรับการประเมิน
         let currentStudentId = '';
@@ -507,94 +568,7 @@
         let questions = [];
         let currentCourse = null;
         let debugMode = true; // ตั้งเป็น true เพื่อแสดงข้อมูลดีบั๊ก
-        let currentLanguage = 'th'; // ค่าเริ่มต้นเป็นภาษาไทย
-        
-        // ข้อความสำหรับภาษาไทยและอังกฤษ
-        const translations = {
-            th: {
-                title: "ระบบประเมินอาจารย์ผู้สอน",
-                subtitle: "กรุณาประเมินการสอนของอาจารย์เพื่อการพัฒนาคุณภาพการเรียนการสอน",
-                login: "เข้าสู่ระบบ",
-                studentId: "รหัสนักศึกษา",
-                enterStudentId: "กรุณากรอกรหัสนักศึกษา",
-                loginButton: "เข้าสู่ระบบ",
-                coursesToEvaluate: "รายวิชาที่ต้องประเมิน",
-                courseName: "ชื่อรายวิชา",
-                instructor: "อาจารย์ผู้สอน",
-                semester: "ภาคการศึกษา",
-                evaluationStatus: "สถานะการประเมิน",
-                clickToEvaluate: "คลิกเพื่อประเมิน",
-                evaluated: "ประเมินแล้ว",
-                logout: "ออกจากระบบ",
-                back: "ย้อนกลับ",
-                submit: "ส่งแบบประเมิน",
-                evaluationForm: "แบบประเมินการสอน",
-                progress: "ความคืบหน้า",
-                success: "ส่งแบบประเมินเรียบร้อยแล้ว",
-                thankYou: "ขอบคุณสำหรับข้อมูลที่เป็นประโยชน์",
-                pleaseAnswer: "กรุณาตอบคำถามข้อที่",
-                loading: "กำลังโหลด...",
-                verifyingData: "กำลังตรวจสอบข้อมูล...",
-                sendingForm: "กำลังส่งแบบประเมิน...",
-                provideYourFeedback: "กรุณาแสดงความคิดเห็นของคุณ",
-                error: "เกิดข้อผิดพลาด",
-                connectionError: "เกิดข้อผิดพลาดในการเชื่อมต่อ",
-                studentNotFound: "ไม่พบข้อมูลนักศึกษาในระบบ กรุณาตรวจสอบรหัสนักศึกษาหรือติดต่ออาจารย์",
-                veryPoor: "แย่มาก",
-                poor: "แย่",
-                normal: "ปานกลาง",
-                good: "ดี",
-                excellent: "ดีมาก",
-                ratingHelpText: "คลิกเพื่อให้คะแนน 1-5 โดย 1 = แย่มาก, 5 = ดีมาก",
-                feedbackHelpText: "แสดงความคิดเห็นเพิ่มเติมหรือข้อเสนอแนะ"
-            },
-            en: {
-                title: "Teacher Evaluation System",
-                subtitle: "Please evaluate the teacher's instruction for the improvement of teaching and learning quality",
-                login: "Login",
-                studentId: "Student ID",
-                enterStudentId: "Please enter your student ID",
-                loginButton: "Login",
-                coursesToEvaluate: "Courses to be evaluated",
-                courseName: "Course Name",
-                instructor: "Instructor",
-                semester: "Semester",
-                evaluationStatus: "Evaluation Status",
-                clickToEvaluate: "Click to evaluate",
-                evaluated: "Evaluated",
-                logout: "Logout",
-                back: "Back",
-                submit: "Submit Evaluation Form",
-                evaluationForm: "Teaching Evaluation Form",
-                progress: "Progress",
-                success: "Evaluation form submitted successfully",
-                thankYou: "Thank you for providing useful information",
-                pleaseAnswer: "Please answer question number",
-                loading: "Loading...",
-                verifyingData: "Verifying data...",
-                sendingForm: "Sending evaluation form...",
-                provideYourFeedback: "Please provide your feedback",
-                error: "Error",
-                connectionError: "Connection error",
-                studentNotFound: "Student information not found in the system. Please verify the ID or contact the instructor",
-                veryPoor: "Very Poor",
-                poor: "Poor",
-                normal: "Normal",
-                good: "Good",
-                excellent: "Excellent",
-                ratingHelpText: "Click to rate from 1-5 where 1 = Very Poor, 5 = Excellent",
-                feedbackHelpText: "Provide any additional comments or suggestions"
-            }
-        };
-        
-        // emoji สำหรับระดับคะแนน
-        const ratingEmojis = {
-            1: "😞",
-            2: "🙁",
-            3: "😐",
-            4: "🙂",
-            5: "😃"
-        };
+        let answeredQuestions = 0; // จำนวนคำถามที่ตอบแล้ว
 
         // เมื่อเอกสารโหลดเสร็จ
         $(document).ready(function() {
@@ -602,9 +576,6 @@
             if (debugMode) {
                 $('#debug-info').show();
             }
-            
-            // เริ่มต้นด้วยการตั้งค่าภาษา
-            setLanguage(currentLanguage);
             
             // ทดสอบการเชื่อมต่อกับ API
             testApiConnection();
@@ -643,91 +614,51 @@
                 openEvaluationForm(index);
             });
             
-            // เพิ่ม Event handling สำหรับการคลิกที่ rating-item ทั้งรายการ
+            // เพิ่ม Event Delegation สำหรับตัวเลือกคะแนน
             $(document).on('click', '.rating-item', function() {
-                const input = $(this).find('input[type="radio"]');
+                // เลือก input ภายในรายการที่คลิก
+                const input = $(this).find('input');
                 input.prop('checked', true);
                 
-                // เรียกฟังก์ชันอัปเดตสถานะความคืบหน้า
-                updateProgressBar();
+                // เพิ่มคลาส selected ให้กับรายการที่เลือก
+                $(this).siblings().removeClass('selected');
+                $(this).addClass('selected');
                 
-                // เพิ่มคลาสเพื่อเน้นรายการที่เลือก
-                const questionGroup = $(this).closest('.question');
-                questionGroup.find('.rating-item').removeClass('selected selected-1 selected-2 selected-3 selected-4 selected-5');
-                
-                // เพิ่มคลาสตามคะแนนที่เลือก
-                const value = input.val();
-                $(this).addClass('selected selected-' + value);
+                // อัปเดตความคืบหน้า
+                updateProgress();
             });
             
-            // ปุ่มสลับภาษา
-            $('#lang-th').click(function() {
-                setLanguage('th');
-                $(this).addClass('active');
-                $('#lang-en').removeClass('active');
+            // อัปเดตสถานะความคืบหน้าเมื่อกรอกข้อความในช่องความคิดเห็น
+            $(document).on('input', 'textarea', function() {
+                updateProgress();
             });
-            
-            $('#lang-en').click(function() {
-                setLanguage('en');
-                $(this).addClass('active');
-                $('#lang-th').removeClass('active');
-            });
-            
-            // เพิ่ม tooltip สำหรับคำแนะนำ
-            initTooltips();
         });
-
-        // ฟังก์ชันสร้าง tooltip
-        function initTooltips() {
-            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-            [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
-        }
         
-        // ฟังก์ชันตั้งค่าภาษา
-        function setLanguage(lang) {
-            currentLanguage = lang;
-            const texts = translations[lang];
+        // ฟังก์ชันอัปเดตความคืบหน้า
+        function updateProgress() {
+            if (questions.length === 0) return;
             
-            // อัปเดตข้อความตามภาษาที่เลือก
-            document.title = texts.title;
-            $('.header h2').text(texts.title);
-            $('.header p').text(texts.subtitle);
+            // นับจำนวนคำถามที่ตอบแล้ว
+            answeredQuestions = 0;
             
-            // หน้าล็อกอิน
-            $('#login-page h3').text(texts.login);
-            $('label[for="student-id"]').text(texts.studentId);
-            $('#student-id').attr('placeholder', texts.enterStudentId);
-            $('#login-btn').text(texts.loginButton);
+            questions.forEach((_, index) => {
+                if (index < questions.length - 1) { // คำถามแบบเรทติ้ง
+                    if ($(`input[name="q${index}"]:checked`).length > 0) {
+                        answeredQuestions++;
+                    }
+                } 
+                // คำถามข้อความไม่จำเป็นต้องตอบ จึงไม่นับในความคืบหน้า
+            });
             
-            // หน้ารายวิชา
-            $('#courses-page h3').text(texts.coursesToEvaluate);
-            $('.table th:nth-child(2)').text(texts.courseName);
-            $('.table th:nth-child(3)').text(texts.instructor);
-            $('.table th:nth-child(4)').text(texts.semester);
-            $('.table th:nth-child(5)').text(texts.evaluationStatus);
-            $('.evaluate-btn').text(texts.clickToEvaluate);
-            $('.submitted').text(texts.evaluated);
-            $('#logout-btn').text(texts.logout);
+            // คำนวณเปอร์เซ็นต์ความคืบหน้า (ไม่รวมคำถามข้อความ)
+            const totalRequiredQuestions = questions.length - 1;
+            const progress = (answeredQuestions / totalRequiredQuestions) * 100;
             
-            // หน้าแบบประเมิน
-            $('#evaluation-page h3').text(texts.evaluationForm);
-            $('.progress-container span:first-child').text(texts.progress);
-            $('#back-to-courses').text(texts.back);
-            $('#submit-evaluation').text(texts.submit);
+            // อัปเดตแถบความคืบหน้า
+            $('#evaluation-progress').css('width', progress + '%').attr('aria-valuenow', progress);
+            $('#progress-text').text(`${answeredQuestions}/${totalRequiredQuestions}`);
             
-            // หน้าสำเร็จ
-            $('#success-page h3').text(texts.success);
-            $('#success-page p').text(texts.thankYou);
-            $('#back-to-courses-success').text(texts.back);
-            
-            // อัปเดตเนื้อหาอื่นๆ ถ้ามีการเปลี่ยนภาษาขณะอยู่ในหน้าต่างๆ
-            if (currentCourse) {
-                createEvaluationForm();
-            }
-            
-            if (coursesToEvaluate.length > 0) {
-                populateCoursesTable();
-            }
+            return answeredQuestions === totalRequiredQuestions;
         }
 
         // ฟังก์ชันทดสอบการเชื่อมต่อกับ API
@@ -746,11 +677,11 @@
                 .then(data => {
                     if (data.error) {
                         // แสดงข้อความข้อผิดพลาด
-                        apiStatus.addClass('error').text(translations[currentLanguage].connectionError + ': ' + data.message).show();
+                        apiStatus.addClass('error').text('API connection problem: ' + data.message).show();
                         console.error('API error:', data);
                     } else {
                         // แสดงข้อความเชื่อมต่อสำเร็จ (ซ่อนหลังจาก 3 วินาที)
-                        apiStatus.addClass('success').text(translations[currentLanguage].evaluationForm + ' ' + translations[currentLanguage].loading.replace('...', '') + ' ' + translations[currentLanguage].success.replace('submitted successfully', 'ready')).show();
+                        apiStatus.addClass('success').text('Evaluation form is ready.').show();
                         setTimeout(() => {
                             apiStatus.fadeOut();
                         }, 3000);
@@ -758,7 +689,7 @@
                 })
                 .catch(error => {
                     // แสดงข้อความข้อผิดพลาด
-                    apiStatus.addClass('error').text(translations[currentLanguage].connectionError + ': ' + error.message).show();
+                    apiStatus.addClass('error').text('Cannot connect to API: ' + error.message).show();
                     console.error('API connection error:', error);
                 });
         }
@@ -768,12 +699,12 @@
             const studentId = $('#student-id').val().trim();
             
             if (studentId === '') {
-                $('#login-error').text(translations[currentLanguage].enterStudentId);
+                $('#login-error').text('Please enter your student ID.');
                 return;
             }
             
             $('#login-error').text('');
-            showLoading(translations[currentLanguage].verifyingData);
+            showLoading('Verifying data...');
             
             // เรียกใช้ API เพื่อดึงข้อมูลรายวิชาของนักศึกษา
             fetch(`${API_URL}?action=getStudentCourses&studentId=${studentId}`)
@@ -791,13 +722,13 @@
                     
                     if (data.error) {
                         hideLoading();
-                        $('#login-error').text(translations[currentLanguage].error + ': ' + data.message);
+                        $('#login-error').text('Error: ' + data.message);
                         return;
                     }
                     
                     if (!data.courses || data.courses.length === 0) {
                         hideLoading();
-                        $('#login-error').text(translations[currentLanguage].studentNotFound);
+                        $('#login-error').text('Student information not found in the system. Please verify the ID or contact the instructor.');
                         return;
                     }
                     
@@ -825,7 +756,7 @@
                         
                         if (data.error) {
                             hideLoading();
-                            $('#login-error').text(translations[currentLanguage].error + ' ' + translations[currentLanguage].loading + ' ' + translations[currentLanguage].evaluationForm + ': ' + data.message);
+                            $('#login-error').text('Error getting questions: ' + data.message);
                             return;
                         }
                         
@@ -837,7 +768,7 @@
                 .catch(error => {
                     console.error('Login error:', error);
                     hideLoading();
-                    $('#login-error').text(translations[currentLanguage].connectionError + ': ' + error.message);
+                    $('#login-error').text('Connection error: ' + error.message);
                 });
         }
 
@@ -845,8 +776,6 @@
         function populateCoursesTable() {
             const tableBody = $('#courses-table-body');
             tableBody.empty();
-            
-            const texts = translations[currentLanguage];
             
             coursesToEvaluate.forEach((course, index) => {
                 // ตรวจสอบสถานะการประเมิน - ใช้ includes แทนการเทียบเท่ากันแบบตรงๆ
@@ -858,11 +787,11 @@
                     // สร้างปุ่มที่มองเห็นชัดเจน
                     statusCell = `
                         <button class="btn btn-danger evaluate-btn" data-index="${index}">
-                            ${texts.clickToEvaluate}
+                            Click to evaluate
                         </button>
                     `;
                 } else {
-                    statusCell = `<span class="text-success fw-bold">${texts.evaluated}</span>`;
+                    statusCell = `<span class="text-success fw-bold">Evaluated</span>`;
                 }
                 
                 tableBody.append(`
@@ -894,11 +823,12 @@
             // สร้างแบบฟอร์มประเมิน
             createEvaluationForm();
             
+            // รีเซ็ตความคืบหน้า
+            answeredQuestions = 0;
+            updateProgress();
+            
             // แสดงหน้าประเมิน
             showPage('evaluation-page');
-            
-            // เริ่มต้นแถบความคืบหน้าที่ 0%
-            updateProgressBar();
         }
 
         // ฟังก์ชันสร้างแบบฟอร์มประเมิน
@@ -914,46 +844,44 @@
                 
                 form.append(questionHtml);
             });
-            
-            // เริ่มต้นการใช้งาน tooltip หลังจากสร้างฟอร์มเสร็จ
-            initTooltips();
         }
 
         // สร้างคำถามแบบเรทติ้ง
         function createRatingQuestion(question, index) {
-            const texts = translations[currentLanguage];
-            
             return `
                 <div class="question">
                     <div class="form-group">
                         <label><strong>${index + 1}. ${question}</strong>
-                            <i class="fa-solid fa-circle-question help-icon" data-bs-toggle="tooltip" title="${texts.ratingHelpText}"></i>
+                            <div class="help-tip">
+                                <i class="fas fa-info-circle"></i>
+                                <span class="tooltip-text">Rate from 1 (very poor) to 5 (excellent)</span>
+                            </div>
                         </label>
                         <div class="rating-container">
-                            <div class="rating-item">
+                            <div class="rating-item rating-1">
                                 <input type="radio" name="q${index}" id="q${index}_1" value="1" class="form-check-input" required>
-                                <span class="rating-emoji">${ratingEmojis[1]}</span>
-                                <label for="q${index}_1" class="rating-label">1 ${texts.veryPoor}</label>
+                                <i class="fas fa-star rating-icon"></i>
+                                <label for="q${index}_1" class="rating-label">1 Very Poor</label>
                             </div>
-                            <div class="rating-item">
+                            <div class="rating-item rating-2">
                                 <input type="radio" name="q${index}" id="q${index}_2" value="2" class="form-check-input" required>
-                                <span class="rating-emoji">${ratingEmojis[2]}</span>
-                                <label for="q${index}_2" class="rating-label">2 ${texts.poor}</label>
+                                <i class="fas fa-star rating-icon"></i>
+                                <label for="q${index}_2" class="rating-label">2 Poor</label>
                             </div>
-                            <div class="rating-item">
+                            <div class="rating-item rating-3">
                                 <input type="radio" name="q${index}" id="q${index}_3" value="3" class="form-check-input" required>
-                                <span class="rating-emoji">${ratingEmojis[3]}</span>
-                                <label for="q${index}_3" class="rating-label">3 ${texts.normal}</label>
+                                <i class="fas fa-star rating-icon"></i>
+                                <label for="q${index}_3" class="rating-label">3 Normal</label>
                             </div>
-                            <div class="rating-item">
+                            <div class="rating-item rating-4">
                                 <input type="radio" name="q${index}" id="q${index}_4" value="4" class="form-check-input" required>
-                                <span class="rating-emoji">${ratingEmojis[4]}</span>
-                                <label for="q${index}_4" class="rating-label">4 ${texts.good}</label>
+                                <i class="fas fa-star rating-icon"></i>
+                                <label for="q${index}_4" class="rating-label">4 Good</label>
                             </div>
-                            <div class="rating-item">
+                            <div class="rating-item rating-5">
                                 <input type="radio" name="q${index}" id="q${index}_5" value="5" class="form-check-input" required>
-                                <span class="rating-emoji">${ratingEmojis[5]}</span>
-                                <label for="q${index}_5" class="rating-label">5 ${texts.excellent}</label>
+                                <i class="fas fa-star rating-icon"></i>
+                                <label for="q${index}_5" class="rating-label">5 Excellent</label>
                             </div>
                         </div>
                     </div>
@@ -963,41 +891,19 @@
 
         // สร้างคำถามแบบข้อความ
         function createTextAreaQuestion(question, index) {
-            const texts = translations[currentLanguage];
-            
             return `
                 <div class="question">
                     <div class="form-group">
                         <label for="q${index}"><strong>${index + 1}. ${question}</strong>
-                            <i class="fa-solid fa-circle-question help-icon" data-bs-toggle="tooltip" title="${texts.feedbackHelpText}"></i>
+                            <div class="help-tip">
+                                <i class="fas fa-lightbulb"></i>
+                                <span class="tooltip-text">Your feedback helps improve the course</span>
+                            </div>
                         </label>
-                        <textarea class="form-control mt-2" id="q${index}" name="q${index}" rows="4" placeholder="${texts.provideYourFeedback}"></textarea>
+                        <textarea class="form-control mt-2" id="q${index}" name="q${index}" rows="4" placeholder="Please provide your feedback."></textarea>
                     </div>
                 </div>
             `;
-        }
-        
-        // อัปเดตแถบความคืบหน้า
-        function updateProgressBar() {
-            // นับจำนวนคำถามและจำนวนที่ตอบแล้ว
-            const totalQuestions = questions.length - 1; // ไม่นับคำถามข้อความ
-            let answeredQuestions = 0;
-            
-            questions.forEach((_, index) => {
-                if (index < questions.length - 1) { // เฉพาะคำถามแบบเรทติ้ง
-                    if ($(`input[name="q${index}"]:checked`).length > 0) {
-                        answeredQuestions++;
-                    }
-                }
-            });
-            
-            // คำนวณเปอร์เซ็นต์
-            const progressPercent = Math.round((answeredQuestions / totalQuestions) * 100);
-            
-            // อัปเดตแถบและข้อความ
-            $('#progress-bar').css('width', progressPercent + '%');
-            $('#progress-bar').attr('aria-valuenow', progressPercent);
-            $('#progress-text').text(progressPercent + '%');
         }
 
         // ฟังก์ชันส่งแบบประเมิน - แก้ไขปัญหา CORS โดยใช้ mode: 'no-cors'
@@ -1014,7 +920,7 @@
             });
             
             if (unansweredQuestions.length > 0) {
-                $('#evaluation-status').html(`<div class="alert alert-danger">${translations[currentLanguage].pleaseAnswer} ${unansweredQuestions.join(', ')}</div>`);
+                $('#evaluation-status').html(`<div class="alert alert-danger">Please answer question number ${unansweredQuestions.join(', ')}</div>`);
                 return;
             }
             
@@ -1038,7 +944,7 @@
                 answers: answers
             };
             
-            showLoading(translations[currentLanguage].sendingForm);
+            showLoading('Sending evaluation...');
             
             console.log('Sending evaluation data:', evaluationData);
             
@@ -1071,7 +977,7 @@
             .catch(error => {
                 hideLoading();
                 console.error('Submit evaluation error:', error);
-                $('#evaluation-status').html(`<div class="alert alert-danger">${translations[currentLanguage].error}: ${error.message}</div>`);
+                $('#evaluation-status').html(`<div class="alert alert-danger">Error: ${error.message}</div>`);
             });
         }
 
@@ -1101,7 +1007,7 @@
 
         // ฟังก์ชันแสดงการโหลด
         function showLoading(message) {
-            $('#status-message').text(message || translations[currentLanguage].loading);
+            $('#status-message').text(message || 'Loading...');
             $('#loading').show();
         }
 
@@ -1109,6 +1015,6 @@
         function hideLoading() {
             $('#loading').hide();
         }
-   
+    </script>
 </body>
 </html>

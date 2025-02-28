@@ -114,35 +114,35 @@
 <body>
     <div class="container">
         <div class="header">
-            <h2>ระบบประเมินอาจารย์ผู้สอน</h2>
-            <p class="text-muted">กรุณาประเมินการสอนของอาจารย์เพื่อการพัฒนาคุณภาพการเรียนการสอน</p>
+            <h2>Teacher Evaluation System</h2>
+            <p class="text-muted">Please evaluate the teacher's instruction for the improvement of teaching and learning quality.</p>
         </div>
 
         <!-- หน้าล็อกอิน -->
         <div id="login-page">
-            <h3 class="mb-4">เข้าสู่ระบบ</h3>
+            <h3 class="mb-4">Login</h3>
             <div class="mb-3">
-                <label for="student-id" class="form-label">รหัสนักศึกษา</label>
-                <input type="text" class="form-control" id="student-id" placeholder="กรุณากรอกรหัสนักศึกษา">
+                <label for="student-id" class="form-label">Student ID</label>
+                <input type="text" class="form-control" id="student-id" placeholder="Please enter your student ID.">
             </div>
-            <button id="login-btn" class="btn btn-primary">เข้าสู่ระบบ</button>
+            <button id="login-btn" class="btn btn-primary">Login</button>
             <div id="login-error" class="mt-3 text-danger"></div>
             <div id="api-connection-status" class="api-status"></div>
         </div>
 
         <!-- หน้ารายวิชาที่ต้องประเมิน -->
         <div id="courses-page" style="display: none;">
-            <h3 class="mb-4">รายวิชาที่ต้องประเมิน</h3>
-            <p>รหัสนักศึกษา: <span id="student-id-display"></span></p>
+            <h3 class="mb-4">Courses to be evaluated</h3>
+            <p>Student ID: <span id="student-id-display"></span></p>
             <div class="table-responsive course-table">
                 <table class="table table-bordered">
                     <thead class="table-light">
                         <tr>
-                            <th>ลำดับ</th>
-                            <th>ชื่อวิชา</th>
-                            <th>อาจารย์ผู้สอน</th>
-                            <th>ภาคการศึกษา</th>
-                            <th>สถานะการประเมิน</th>
+                            <th>No.</th>
+                            <th>Course Name</th>
+                            <th>Instructor</th>
+                            <th>Semester</th>
+                            <th>Evaluation Status</th>
                         </tr>
                     </thead>
                     <tbody id="courses-table-body">
@@ -150,7 +150,7 @@
                     </tbody>
                 </table>
             </div>
-            <button id="logout-btn" class="btn btn-secondary">ออกจากระบบ</button>
+            <button id="logout-btn" class="btn btn-secondary">Logout</button>
             
             <!-- ข้อมูลดีบั๊ก (ซ่อนไว้โดยค่าเริ่มต้น) -->
             <div id="debug-info" class="debug-info">
@@ -161,12 +161,12 @@
 
         <!-- หน้าแบบประเมิน -->
         <div id="evaluation-page" style="display: none;">
-            <h3 class="mb-4">แบบประเมินการสอน</h3>
+            <h3 class="mb-4">Teaching Evaluation Form</h3>
             <div id="evaluation-info" class="mb-4">
-                <p>รหัสนักศึกษา: <span id="eval-student-id"></span></p>
-                <p>รายวิชา: <span id="eval-course"></span></p>
-                <p>อาจารย์ผู้สอน: <span id="eval-teacher"></span></p>
-                <p>ภาคการศึกษา: <span id="eval-semester"></span></p>
+                <p>Student ID: <span id="eval-student-id"></span></p>
+                <p>Course: <span id="eval-course"></span></p>
+                <p>Instructor: <span id="eval-teacher"></span></p>
+                <p>Semester: <span id="eval-semester"></span></p>
             </div>
             
             <div id="evaluation-form">
@@ -174,8 +174,8 @@
             </div>
             
             <div class="mt-4">
-                <button id="submit-evaluation" class="btn btn-primary">ส่งแบบประเมิน</button>
-                <button id="back-to-courses" class="btn btn-secondary ms-2">ย้อนกลับ</button>
+                <button id="submit-evaluation" class="btn btn-primary">Submit Evaluation Form</button>
+                <button id="back-to-courses" class="btn btn-secondary ms-2">Back</button>
             </div>
             
             <div id="evaluation-status" class="text-center mt-3"></div>
@@ -184,15 +184,15 @@
         <!-- ส่วนแสดงสถานะและโหลด -->
         <div id="loading" style="display: none;">
             <div class="loader"></div>
-            <div id="status-message">กำลังโหลดข้อมูล...</div>
+            <div id="status-message">Loading Data...</div>
         </div>
 
         <!-- ส่วนแสดงข้อความเมื่อประเมินเสร็จ -->
         <div id="success-page" style="display: none;">
             <div class="text-center">
-                <h3 class="text-success mb-4">ส่งแบบประเมินเรียบร้อยแล้ว</h3>
-                <p>ขอบคุณสำหรับการให้ข้อมูลที่เป็นประโยชน์</p>
-                <button id="back-to-courses-success" class="btn btn-primary mt-3">กลับไปหน้ารายวิชา</button>
+                <h3 class="text-success mb-4">Evaluation form submitted successfully.</h3>
+                <p>Thank you for providing useful information.</p>
+                <button id="back-to-courses-success" class="btn btn-primary mt-3">Back to Course Page</button>
             </div>
         </div>
     </div>
@@ -201,7 +201,6 @@
     <script>
         // ข้อมูลเชื่อมต่อกับ Google Sheets API
       const API_URL = "https://script.google.com/macros/s/AKfycbzaznM2MMG1LBlWO6IGahGyL2XyBwQ2S6VN--W7xQJY4_43fPF1L-phHrm975elb4D-/exec";
-//	const API_URL = "/proxy.php"; // เปลี่ยนเป็นเส้นทางไปยังไฟล์ proxy.php บนเซิร์ฟเวอร์ของคุณ
         
         // ข้อมูลที่จำเป็นสำหรับการประเมิน
         let currentStudentId = '';
@@ -293,12 +292,12 @@
             const studentId = $('#student-id').val().trim();
             
             if (studentId === '') {
-                $('#login-error').text('กรุณากรอกรหัสนักศึกษา');
+                $('#login-error').text('Please enter your student ID.');
                 return;
             }
             
             $('#login-error').text('');
-            showLoading('กำลังตรวจสอบข้อมูล...');
+            showLoading('Verifying data....');
             
             // เรียกใช้ API เพื่อดึงข้อมูลรายวิชาของนักศึกษา
             fetch(`${API_URL}?action=getStudentCourses&studentId=${studentId}`)
@@ -322,7 +321,7 @@
                     
                     if (!data.courses || data.courses.length === 0) {
                         hideLoading();
-                        $('#login-error').text('ไม่พบข้อมูลนักศึกษาในระบบ');
+                        $('#login-error').text('Student information not found in the system. Please verify the ID or contact the instructor.');
                         return;
                     }
                     
@@ -475,7 +474,7 @@
                 <div class="question">
                     <div class="form-group">
                         <label for="q${index}"><strong>${index + 1}. ${question}</strong></label>
-                        <textarea class="form-control mt-2" id="q${index}" name="q${index}" rows="4" placeholder="กรุณาแสดงความคิดเห็น"></textarea>
+                        <textarea class="form-control mt-2" id="q${index}" name="q${index}" rows="4" placeholder="Please provide your feedback."></textarea>
                     </div>
                 </div>
             `;
@@ -495,7 +494,7 @@
             });
             
             if (unansweredQuestions.length > 0) {
-                $('#evaluation-status').html(`<div class="alert alert-danger">กรุณาตอบคำถามข้อที่ ${unansweredQuestions.join(', ')}</div>`);
+                $('#evaluation-status').html(`<div class="alert alert-danger">Please answer question number ${unansweredQuestions.join(', ')}</div>`);
                 return;
             }
             
@@ -544,7 +543,7 @@
                     c.teacherName === currentCourse.teacherName);
                 
                 if (courseIndex !== -1) {
-                    coursesToEvaluate[courseIndex].status = 'ประเมินแล้ว';
+                    coursesToEvaluate[courseIndex].status = 'Evaluated.';
                 }
                 
                 showPage('success-page');

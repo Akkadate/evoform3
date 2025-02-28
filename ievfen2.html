@@ -712,7 +712,7 @@
                 answers: answers
             };
             
-            showLoading('กำลังส่งแบบประเมิน...');
+            showLoading('Submitting evaluation form...');
             
             console.log('Sending evaluation data:', evaluationData);
             
@@ -775,7 +775,7 @@
 
         // ฟังก์ชันแสดงการโหลด
         function showLoading(message) {
-            $('#status-message').text(message || 'กำลังโหลด...');
+            $('#status-message').text(message || 'Loading...');
             $('#loading').show();
         }
 
